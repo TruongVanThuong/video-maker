@@ -30,12 +30,34 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Dashboard
                                 </NavLink>
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
+
+                                {/* BIẾN CATEGORIES THÀNH MENU CON TRÊN DESKTOP */}
+                                <div className="inline-flex items-center pt-1">
+                                    <Dropdown align="left" width="48">
+                                        <Dropdown.Trigger>
+                                            <button
+                                                type="button"
+                                                className={`inline-flex items-center text-sm font-medium leading-5 transition duration-150 ease-in-out border-b-2 ${
+                                                    route().current('categories*') // Sáng lên nếu đang ở các trang con của categories
+                                                        ? 'border-indigo-400 text-gray-900 focus:border-indigo-700'
+                                                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 focus:border-gray-300 focus:text-gray-700'
+                                                } h-full pb-1`}
+                                            >
+                                                <span>Categories</span>
+                                                <svg className="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </Dropdown.Trigger>
+
+                                        <Dropdown.Content>
+                                            <Dropdown.Link href={route('categories')}>
+                                                Tất Cả Danh Mục
+                                            </Dropdown.Link>
+                                            <Dropdown.Link href={route('categories.create')}>Thêm Mới</Dropdown.Link>
+                                        </Dropdown.Content>
+                                    </Dropdown>
+                                </div>
                             </div>
                         </div>
 
@@ -127,6 +149,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </div>
 
+                {/* MENU MOBILE CẬP NHẬT */}
                 <div
                     className={
                         (showingNavigationDropdown ? 'block' : 'hidden') +
@@ -140,6 +163,16 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Dashboard
                         </ResponsiveNavLink>
+
+                        {/* Link cha Categories cho Mobile */}
+                        <ResponsiveNavLink
+                            href={route('categories')}
+                            active={route().current('categories')}
+                        >
+                            Categories
+                        </ResponsiveNavLink>
+                        {/* Bạn có thể thêm thụt lề cho link con của Categories trên mobile nếu cần bằng cách tăng pl-8 */}
+                        {/* <ResponsiveNavLink href={route('categories.create')} className="pl-8" active={route().current('categories.create')}>+ Thêm Mới</ResponsiveNavLink> */}
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">
