@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\PromptAnalyzerController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -24,4 +25,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Route::get('/prompts', function () {
+//     return Inertia::render('Prompts');
+// })->middleware(['auth', 'verified'])->name('prompts.index');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/prompts', [PromptAnalyzerController::class, 'index'])
+        ->name('prompts.index');
+    Route::post('/prompts', [PromptAnalyzerController::class, 'store'])
+        ->name('prompts.store');
+});
 require __DIR__.'/auth.php';
