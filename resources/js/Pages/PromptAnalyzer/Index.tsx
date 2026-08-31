@@ -13,6 +13,7 @@ interface RecentPrompt {
     id: number;
     input_content: string;
     status: PromptStatus;
+    analyzed_structure: Record<string, unknown> | null;
     final_prompt: string | null;
     created_at: string;
 }
@@ -30,19 +31,13 @@ interface FormData {
 
 export default function Index() {
     const { templates, recentPrompts, flash } = usePage<PageProps>().props;
-    const { status, result, startPolling } = usePromptPolling(null);
+
+    const { status, result } = usePromptPolling(flash?.prompt_id);
 
     const { data, setData, post, processing, errors, reset } = useForm<FormData>({
         input_content: '',
         prompt_template_id: '',
     });
-
-    // Lắng nghe flash.prompt_id để kích hoạt polling
-    useEffect(() => {
-        if (flash?.prompt_id) {
-            startPolling(flash.prompt_id);
-        }
-    }, [flash?.prompt_id]);
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -104,15 +99,11 @@ export default function Index() {
                 </button>
             </form>
 
-            {/* TRẠNG THÁI XỬ LÝ */}
             <StatusDisplay status={status} result={result} />
-
-            {/* DANH SÁCH GẦN ĐÂY */}
             <RecentPromptsList prompts={recentPrompts} />
         </div>
     );
 }
-
 // --- SUB COMPONENTS (Giúp Index gọn gàng hơn rất nhiều) ---
 
 function StatusDisplay({ status, result }: { status: PromptStatus; result: PromptResult | null }) {
@@ -156,6 +147,11 @@ function RecentPromptsList({ prompts }: { prompts: RecentPrompt[] }) {
                 <div key={p.id} className="p-3 border rounded-md space-y-1">
                     <p className="font-medium line-clamp-1">{p.input_content}</p>
                     <span className="text-xs px-2 py-0.5 bg-gray-200 rounded-full capitalize">{p.status}</span>
+                    {p.analyzed_structure && (
+                        <pre className="p-2 bg-gray-900 text-green-400 rounded text-xs overflow-x-auto">
+                            {JSON.stringify(p.analyzed_structure, null, 2)}
+                        </pre>
+                    )}
                 </div>
             ))}
         </div>

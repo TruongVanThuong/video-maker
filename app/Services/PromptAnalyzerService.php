@@ -51,96 +51,61 @@ class PromptAnalyzerService
                 'lighting_and_atmosphere',
                 'final_video_prompt',
             ],
-            'additionalProperties' => false,
         ];
 
-        $prompt = <<<PROMPT
-{$systemInstruction}
-
-Analyze the following content into a video prompt.
-
-User content:
-{$contentPrompt->input_content}
-PROMPT;
-
-        $model = config('services.gemini.model', 'gemini-2.5-flash');
+        // Dùng model tương thích với Gemini API
+        $model = config('services.gemini.model', 'gemini-flash-latest');
         $apiKey = config('services.gemini.key');
-        dd([
-                'model' => $model,
-                'has_api_key' => !empty($apiKey),
-                'api_key_length' => strlen($apiKey ?? ''),
-                'url' => "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent",
-            ]);
+
         if (!$apiKey) {
-            throw new RuntimeException(
-                'Gemini API key is not configured.'
-            );
+            throw new RuntimeException('Gemini API key is not configured.');
         }
 
+        // Tự động retry 3 lần, mỗi lần cách nhau 2000ms (2 giây) nếu dính lỗi 503 hoặc timeout
         $response = Http::timeout(60)
-            ->post(
-                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
-                [
-                    'system_instruction' => [
+            ->retry(3, 2000, function ($exception, $request) {
+                // Chỉ retry khi dính lỗi kết nối hoặc mã trả về là 503 (High Demand)
+                return $exception instanceof \Illuminate\Http\Client\ConnectionException || 
+                    ($exception->response && $exception->response->status() === 503);
+            })
+            ->withHeaders([
+                'X-goog-api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+            ])
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                'system_instruction' => [
+                    'parts' => [
+                        ['text' => $systemInstruction],
+                    ],
+                ],
+                'contents' => [
+                    [
+                        'role' => 'user',
                         'parts' => [
-                            [
-                                'text' => $systemInstruction,
-                            ],
+                            ['text' => "Analyze the following content into a video prompt:\n\n" . $contentPrompt->input_content],
                         ],
                     ],
+                ],
+                'generationConfig' => [
+                    'responseMimeType' => 'application/json',
+                    'responseSchema' => $jsonSchema,
+                ],
+            ]);
 
-                    'contents' => [
-                        [
-                            'role' => 'user',
-                            'parts' => [
-                                [
-                                    'text' => "Analyze the following content into a video prompt:\n\n"
-                                        . $contentPrompt->input_content,
-                                ],
-                            ],
-                        ],
-                    ],
-
-                    'generationConfig' => [
-                        'responseMimeType' => 'application/json',
-                        'responseSchema' => $jsonSchema,
-                    ],
-                ]
-            );
-        dd([
-            'status' => $response->status(),
-            'successful' => $response->successful(),
-            'failed' => $response->failed(),
-            'body' => $response->body(),
-        ]);
         if ($response->failed()) {
-            throw new RuntimeException(
-                'Gemini API error: ' . $response->body()
-            );
+            throw new RuntimeException('Gemini API error: ' . $response->body());
         }
 
-        $content = $response->json(
-            'candidates.0.content.parts.0.text'
-        );
+        $content = $response->json('candidates.0.content.parts.0.text');
 
         if (!$content) {
-            throw new RuntimeException(
-                'Gemini returned an empty response.'
-            );
+            throw new RuntimeException('Gemini returned an empty response.');
         }
 
         $data = json_decode($content, true);
 
-        if (!is_array($data)) {
-            throw new RuntimeException(
-                'Gemini returned invalid JSON: ' . $content
-            );
-        }
-
-        if (empty($data['final_video_prompt'])) {
-            throw new RuntimeException(
-                'Gemini response is missing final_video_prompt.'
-            );
+        if (!is_array($data) || empty($data['final_video_prompt'])) {
+            throw new RuntimeException('Gemini returned invalid or incomplete JSON.');
         }
 
         return $data;

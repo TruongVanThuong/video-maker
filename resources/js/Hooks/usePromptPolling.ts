@@ -11,42 +11,69 @@ export interface PromptResult {
     error_message?: string;
 }
 
-export function usePromptPolling(initialPromptId: number | null) {
-    const [activePromptId, setActivePromptId] = useState<number | null>(initialPromptId);
-    const [status, setStatus] = useState<PromptStatus>(initialPromptId ? 'processing' : null);
+export function usePromptPolling(
+    promptId: number | null | undefined
+) {
+    const [status, setStatus] = useState<PromptStatus>(
+        promptId ? 'pending' : null
+    );
+
     const [result, setResult] = useState<PromptResult | null>(null);
 
-    // Cập nhật ID khi submit form thành công từ Flash message
-    const startPolling = (id: number) => {
-        setActivePromptId(id);
-        setStatus('processing');
-        setResult(null);
-    };
-
     useEffect(() => {
-        if (!activePromptId || status === 'completed' || status === 'failed') return;
+        if (!promptId) {
+            setStatus(null);
+            setResult(null);
+            return;
+        }
 
-        const interval = window.setInterval(async () => {
+        let cancelled = false;
+
+        const poll = async () => {
             try {
-                const response = await axios.get<PromptResult>(`/prompts/${activePromptId}/status`);
-                const currentStatus = response.data.status;
+                const response = await axios.get<PromptResult>(
+                    `/prompts/${promptId}/status`
+                );
 
-                setStatus(currentStatus);
+                if (cancelled) return;
 
-                if (currentStatus === 'completed') {
-                    setResult(response.data);
-                    window.clearInterval(interval);
-                } else if (currentStatus === 'failed') {
-                    setResult(response.data);
-                    window.clearInterval(interval);
+                const data = response.data;
+
+                console.log('POLL RESPONSE:', data);
+
+                setStatus(data.status);
+
+                if (
+                    data.status === 'completed' ||
+                    data.status === 'failed'
+                ) {
+                    setResult(data);
                 }
             } catch (error) {
-                console.error('Failed to fetch prompt status:', error);
+                console.error(
+                    'Failed to fetch prompt status:',
+                    error
+                );
             }
-        }, 1500);
+        };
 
-        return () => window.clearInterval(interval);
-    }, [activePromptId, status]);
+        // Gọi ngay lập tức
+        poll();
 
-    return { status, result, startPolling };
+        // Sau đó 1.5 giây gọi lại
+        const interval = window.setInterval(
+            poll,
+            1500
+        );
+
+        return () => {
+            cancelled = true;
+            window.clearInterval(interval);
+        };
+    }, [promptId]);
+
+    return {
+        status,
+        result,
+    };
 }

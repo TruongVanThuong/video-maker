@@ -24,10 +24,6 @@ class AnalyzeContentJob implements ShouldQueue
     public function handle(
         PromptAnalyzerService $analyzerService
     ): void {
-        dd([
-            'job_running' => true,
-            'content_prompt_id' => $this->contentPrompt->id,
-        ]);
         $this->contentPrompt->update([
             'status' => 'processing',
             'error_message' => null,

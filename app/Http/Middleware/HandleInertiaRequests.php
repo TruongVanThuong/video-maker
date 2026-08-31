@@ -34,6 +34,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'flash' => [
+                'prompt_id' => fn () => $request->session()->get('prompt_id'),
+            ],
         ];
     }
 }

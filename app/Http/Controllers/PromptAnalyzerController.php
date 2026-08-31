@@ -48,11 +48,6 @@ class PromptAnalyzerController extends Controller
             'status' => 'pending',
         ]);
 
-        // dd([
-        //     'content_prompt_id' => $contentPrompt->id,
-        //     'status' => $contentPrompt->status,
-        // ]);
-
         // Đẩy vào Queue
         AnalyzeContentJob::dispatch($contentPrompt);
 
@@ -66,6 +61,7 @@ class PromptAnalyzerController extends Controller
         abort_if($contentPrompt->user_id !== auth()->id(), 403);
 
         return response()->json([
+            'id' => $contentPrompt->id,
             'status' => $contentPrompt->status,
             'analyzed_structure' => $contentPrompt->analyzed_structure,
             'final_prompt' => $contentPrompt->final_prompt,
