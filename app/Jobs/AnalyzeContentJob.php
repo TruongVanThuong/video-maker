@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ContentPrompt;
+use App\Repositories\ContentPromptRepository;
 use App\Services\PromptAnalyzerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -22,28 +23,23 @@ class AnalyzeContentJob implements ShouldQueue
     ) {}
 
     public function handle(
-        PromptAnalyzerService $analyzerService
+        PromptAnalyzerService $analyzerService,
+        ContentPromptRepository $contentPromptRepo
     ): void {
-        $this->contentPrompt->update([
-            'status' => 'processing',
-            'error_message' => null,
-        ]);
+        $contentPromptRepo->markAsProcessing($this->contentPrompt->id);
 
         try {
-            $result = $analyzerService->analyze(
-                $this->contentPrompt
-            );
+            $result = $analyzerService->analyze($this->contentPrompt);
 
-            $this->contentPrompt->update([
-                'analyzed_structure' => $result,
-                'final_prompt' => $result['final_video_prompt'],
-                'status' => 'completed',
-            ]);
+            $contentPromptRepo->markAsCompleted(
+                $this->contentPrompt->id,
+                $result
+            );
         } catch (Throwable $e) {
-            $this->contentPrompt->update([
-                'status' => 'failed',
-                'error_message' => $e->getMessage(),
-            ]);
+            $contentPromptRepo->markAsFailed(
+                $this->contentPrompt->id,
+                $e->getMessage()
+            );
 
             throw $e;
         }

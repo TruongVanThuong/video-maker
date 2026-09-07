@@ -34,9 +34,12 @@ Route::middleware('auth')->group(function () {
         ->name('prompts.index');
     Route::post('/prompts', [PromptAnalyzerController::class, 'store'])
         ->name('prompts.store');
-    Route::get(
-        '/prompts/{contentPrompt}/status',
-        [PromptAnalyzerController::class, 'status']
-    );
+    Route::get('/prompts/{contentPrompt}/status', [PromptAnalyzerController::class, 'status'])
+        ->name('prompts.status');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/content-prompts/', [PromptAnalyzerController::class, 'analyze'])
+        ->name('content-prompts.index');
 });
 require __DIR__.'/auth.php';

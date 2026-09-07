@@ -3,19 +3,55 @@
 namespace App\Services;
 
 use App\Models\ContentPrompt;
-use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 class PromptAnalyzerService
 {
+    private GeminiApiClient $geminiClient;
+
+    public function __construct(GeminiApiClient $geminiClient)
+    {
+        $this->geminiClient = $geminiClient;
+    }
+
     public function analyze(ContentPrompt $contentPrompt): array
     {
         $template = $contentPrompt->template;
 
         $systemInstruction = $template?->system_instruction
-            ?? 'You are an expert AI Video Prompt Engineer. Analyze the user content and generate structured parameters for AI Video Generators (Sora/Runway/Kling).';
+            ?? $this->getDefaultSystemInstruction();
 
-        $jsonSchema = [
+        $userPrompt = $this->buildUserPrompt($contentPrompt->input_content);
+        $jsonSchema = $this->getVideoPromptSchema();
+
+        $data = $this->geminiClient->generateContent(
+            $systemInstruction,
+            $userPrompt,
+            $jsonSchema
+        );
+
+        if (!is_array($data) || empty($data['final_video_prompt'])) {
+            throw new RuntimeException('Gemini returned invalid or incomplete response.');
+        }
+
+        return $data;
+    }
+
+    private function getDefaultSystemInstruction(): string
+    {
+        return 'You are an expert AI Video Prompt Engineer. '
+            . 'Analyze the user content and generate structured parameters '
+            . 'for AI Video Generators (Sora/Runway/Kling).';
+    }
+
+    private function buildUserPrompt(string $inputContent): string
+    {
+        return "Analyze the following content into a video prompt:\n\n" . $inputContent;
+    }
+
+    private function getVideoPromptSchema(): array
+    {
+        return [
             'type' => 'object',
             'properties' => [
                 'subject' => [
@@ -52,62 +88,5 @@ class PromptAnalyzerService
                 'final_video_prompt',
             ],
         ];
-
-        // Dùng model tương thích với Gemini API
-        $model = config('services.gemini.model', 'gemini-flash-latest');
-        $apiKey = config('services.gemini.key');
-
-        if (!$apiKey) {
-            throw new RuntimeException('Gemini API key is not configured.');
-        }
-
-        // Tự động retry 3 lần, mỗi lần cách nhau 2000ms (2 giây) nếu dính lỗi 503 hoặc timeout
-        $response = Http::timeout(60)
-            ->retry(3, 2000, function ($exception, $request) {
-                // Chỉ retry khi dính lỗi kết nối hoặc mã trả về là 503 (High Demand)
-                return $exception instanceof \Illuminate\Http\Client\ConnectionException || 
-                    ($exception->response && $exception->response->status() === 503);
-            })
-            ->withHeaders([
-                'X-goog-api-key' => $apiKey,
-                'Content-Type' => 'application/json',
-            ])
-            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
-                'system_instruction' => [
-                    'parts' => [
-                        ['text' => $systemInstruction],
-                    ],
-                ],
-                'contents' => [
-                    [
-                        'role' => 'user',
-                        'parts' => [
-                            ['text' => "Analyze the following content into a video prompt:\n\n" . $contentPrompt->input_content],
-                        ],
-                    ],
-                ],
-                'generationConfig' => [
-                    'responseMimeType' => 'application/json',
-                    'responseSchema' => $jsonSchema,
-                ],
-            ]);
-
-        if ($response->failed()) {
-            throw new RuntimeException('Gemini API error: ' . $response->body());
-        }
-
-        $content = $response->json('candidates.0.content.parts.0.text');
-
-        if (!$content) {
-            throw new RuntimeException('Gemini returned an empty response.');
-        }
-
-        $data = json_decode($content, true);
-
-        if (!is_array($data) || empty($data['final_video_prompt'])) {
-            throw new RuntimeException('Gemini returned invalid or incomplete JSON.');
-        }
-
-        return $data;
     }
 }
