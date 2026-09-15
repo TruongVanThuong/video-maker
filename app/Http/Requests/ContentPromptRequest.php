@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class PromptAnalyzerRequest extends FormRequest
+class ContentPromptRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,6 +16,7 @@ class PromptAnalyzerRequest extends FormRequest
         return [
             'input_content' => 'required|string|min:10|max:10000',
             'prompt_template_id' => 'nullable|exists:prompt_templates,id',
+            'target_platform' => 'nullable|string|max:50',
         ];
     }
 

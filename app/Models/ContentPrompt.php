@@ -12,20 +12,30 @@ class ContentPrompt extends Model
     const STATUS_PROCESSING = 'processing';
     const STATUS_COMPLETED = 'completed';
     const STATUS_FAILED = 'failed';
+    const MAX_REFINEMENTS = 5;
 
     protected $fillable = [
         'user_id',
         'prompt_template_id',
+        'target_platform',
         'input_content',
         'analyzed_structure',
         'final_prompt',
         'status',
         'error_message',
+        'refinement_count',
+        'is_manually_edited',
     ];
 
     protected $casts = [
         'analyzed_structure' => 'array',
+        'is_manually_edited' => 'boolean',
     ];
+
+    public function canBeRefined(): bool
+    {
+        return $this->isCompleted() && $this->refinement_count < self::MAX_REFINEMENTS;
+    }
 
     public function template(): BelongsTo
     {

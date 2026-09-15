@@ -67,4 +67,31 @@ class ContentPromptRepository
     {
         return $this->updateStatus($id, 'failed', $errorMessage);
     }
+
+    public function applyManualEdit(int $id, array $fields, ?string $finalPrompt = null): bool
+    {
+        $contentPrompt = $this->model->findOrFail($id);
+
+        $analyzedStructure = array_merge(
+            $contentPrompt->analyzed_structure ?? [],
+            $fields
+        );
+
+        return $contentPrompt->update([
+            'analyzed_structure' => $analyzedStructure,
+            'final_prompt' => $finalPrompt ?? $contentPrompt->final_prompt,
+            'is_manually_edited' => true,
+        ]);
+    }
+
+    public function markAsRefined(int $id, array $result, int $refinementCount): bool
+    {
+        return $this->model->findOrFail($id)->update([
+            'status' => ContentPrompt::STATUS_COMPLETED,
+            'analyzed_structure' => $result,
+            'final_prompt' => $result['final_video_prompt'] ?? null,
+            'refinement_count' => $refinementCount,
+            'is_manually_edited' => false, // refine mới ghi đè -> reset cờ manual
+        ]);
+    }
 }

@@ -10,6 +10,7 @@ class PromptTemplate extends Model
         'name',
         'category',
         'system_instruction',
+        'is_active',
     ];
 
     public function contentPrompts()

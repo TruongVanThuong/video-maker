@@ -1,79 +1,93 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import { PromptResult, PromptStatus } from '@/types/prompt';
 
-export type PromptStatus = 'pending' | 'processing' | 'completed' | 'failed' | null;
+const POLL_INTERVAL_MS = 1500;
+const MAX_POLL_DURATION_MS = 5 * 60 * 1000;
 
-export interface PromptResult {
-    id: number;
-    status: PromptStatus;
-    final_prompt: string | null;
-    analyzed_structure: Record<string, unknown> | null;
-    error_message?: string;
-}
-
-export function usePromptPolling(
-    promptId: number | null | undefined
-) {
-    const [status, setStatus] = useState<PromptStatus>(
-        promptId ? 'pending' : null
-    );
-
+export function usePromptPolling(initialPromptId: number | null | undefined) {
+    const [activeId, setActiveId] = useState<number | null>(initialPromptId ?? null);
+    const [status, setStatus] = useState<PromptStatus>(initialPromptId ? 'pending' : null);
     const [result, setResult] = useState<PromptResult | null>(null);
+    const [pollNonce, setPollNonce] = useState(0);
+
+    const statusRef = useRef(status);
+    statusRef.current = status;
 
     useEffect(() => {
-        if (!promptId) {
-            setStatus(null);
+        if (initialPromptId) {
+            setActiveId(initialPromptId);
+            setStatus('pending');
             setResult(null);
-            return;
         }
+    }, [initialPromptId]);
 
-        let cancelled = false;
+    useEffect(() => {
+        if (!activeId) return;
+
+        const controller = new AbortController();
+        let timeoutId: number | undefined;
+        const startedAt = Date.now();
+
+        const scheduleNext = () => {
+            if (statusRef.current === 'completed' || statusRef.current === 'failed') return;
+
+            if (Date.now() - startedAt > MAX_POLL_DURATION_MS) {
+                setStatus('failed');
+                setResult((prev) =>
+                    prev ? { ...prev, status: 'failed', error_message: 'Hết thời gian chờ xử lý.' } : null
+                );
+                return;
+            }
+
+            timeoutId = window.setTimeout(poll, POLL_INTERVAL_MS);
+        };
 
         const poll = async () => {
             try {
-                const response = await axios.get<PromptResult>(
-                    `/prompts/${promptId}/status`
-                );
-
-                if (cancelled) return;
-
-                const data = response.data;
-
-                console.log('POLL RESPONSE:', data);
-
-                setStatus(data.status);
-
-                if (
-                    data.status === 'completed' ||
-                    data.status === 'failed'
-                ) {
-                    setResult(data);
-                }
+                const response = await axios.get<PromptResult>(`/prompts/${activeId}/status`, {
+                    signal: controller.signal,
+                });
+                setStatus(response.data.status);
+                setResult(response.data);
+                scheduleNext();
             } catch (error) {
-                console.error(
-                    'Failed to fetch prompt status:',
-                    error
+                if (axios.isCancel(error)) return;
+                console.error('Failed to fetch prompt status:', error);
+                setStatus('failed');
+                setResult((prev) =>
+                    prev ? { ...prev, status: 'failed', error_message: 'Không thể kết nối tới server.' } : null
                 );
             }
         };
 
-        // Gọi ngay lập tức
         poll();
 
-        // Sau đó 1.5 giây gọi lại
-        const interval = window.setInterval(
-            poll,
-            1500
-        );
-
         return () => {
-            cancelled = true;
-            window.clearInterval(interval);
+            controller.abort();
+            if (timeoutId) window.clearTimeout(timeoutId);
         };
-    }, [promptId]);
+        // pollNonce cho phép ép effect chạy lại (ví dụ sau khi trigger refine)
+        // dù activeId không đổi.
+    }, [activeId, pollNonce]);
 
-    return {
-        status,
-        result,
-    };
+    const selectPromptResult = useCallback((selectedResult: PromptResult) => {
+        setActiveId(selectedResult.id);
+        setStatus(selectedResult.status);
+        setResult(selectedResult);
+    }, []);
+
+    // Gọi hàm này ngay sau khi trigger refine thành công (status trả về 'processing')
+    const markAsRefining = useCallback(() => {
+        setStatus('processing');
+        setPollNonce((n) => n + 1);
+    }, []);
+
+    const resetPolling = useCallback(() => {
+        setActiveId(null);
+        setStatus(null);
+        setResult(null);
+    }, []);
+
+    return { activeId, status, result, selectPromptResult, resetPolling, markAsRefining };
 }

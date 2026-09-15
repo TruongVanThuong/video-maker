@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('prompt_template_id')->nullable()->constrained()->nullOnDelete();
             $table->text('input_content');
-            $table->json('analyzed_structure')->nullable(); // Lưu DTO phân tích bối cảnh (scene, camera, movement...)
-            $table->text('final_prompt')->nullable(); // String Prompt hoàn chỉnh chuẩn bị gửi API Video
+            $table->json('analyzed_structure')->nullable();
+            $table->text('final_prompt')->nullable();
             $table->enum('status', ['pending', 'processing', 'completed', 'failed'])->default('pending');
             $table->text('error_message')->nullable();
             $table->timestamps();

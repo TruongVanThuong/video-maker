@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('prompt_templates', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Ví dụ: Cinematic 8k, Anime Studio, Cyberpunk
-            $table->string('category')->default('general'); // cinematic, anime, v.v.
-            $table->text('system_instruction'); // Luật ép AI tạo ra style tương ứng
+            $table->string('name');
+            $table->string('category')->default('general');
+            $table->text('system_instruction');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
