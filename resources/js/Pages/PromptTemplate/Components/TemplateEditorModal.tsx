@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect } from 'react';
+import { FormEvent, useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 import { X, Sparkles, AlertCircle, Save, Info } from 'lucide-react';
 import { PRESET_TEMPLATE_CATEGORIES } from '@/constants/promptTemplateCategories';

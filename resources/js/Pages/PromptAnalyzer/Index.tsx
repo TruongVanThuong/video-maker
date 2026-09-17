@@ -1,42 +1,31 @@
-import React, {
+import {
     FormEvent,
     useEffect,
     useState,
 } from 'react';
-
 import {
     Head,
     useForm,
     usePage,
     Link,
 } from '@inertiajs/react';
-
 import {
     Wand2,
     SlidersHorizontal,
     Cpu,
     CheckCircle2,
 } from 'lucide-react';
-
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-
 import {
     usePromptPolling,
 } from '@/Hooks/usePromptPolling';
-
 import PromptInputForm, {
     PromptTemplate,
     PromptFormData,
 } from './Components/PromptInputForm';
-
-import PromptOutputPanel, {
-    PromptResult,
-    PromptStatus,
-} from './Components/PromptOutputPanel';
-
-import PromptHistoryList, {
-    RecentPrompt,
-} from './Components/PromptHistoryList';
+import PromptOutputPanel from './Components/PromptOutputPanel';
+import PromptHistoryList from './Components/PromptHistoryList';
+import { PromptResult, PromptStatus, RecentPrompt } from '@/types/prompt';
 
 interface PageProps {
     auth: {
@@ -79,7 +68,7 @@ export default function PromptAnalyzerIndex() {
 
     const [liveResult, setLiveResult] = useState<PromptResult | null>(null);
 
-    // đồng bộ khi result từ polling thay đổi, giữ liveResult là nguồn hiển thị chính
+    // Synchronize when the polling result changes, keeping liveResult as the primary display source.
     useEffect(() => {
         if (result) setLiveResult(result);
     }, [result]);

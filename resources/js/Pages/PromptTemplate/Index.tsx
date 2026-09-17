@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Head, usePage, router, Link } from '@inertiajs/react';
 import {
-    Sparkles,
     Plus,
     Search,
     Edit3,
@@ -12,11 +11,7 @@ import {
     Wand2,
     CheckCircle2,
     XCircle,
-    SlidersHorizontal,
     FileText,
-    ChevronLeft,
-    ChevronRight,
-    ArrowRight
 } from 'lucide-react';
 import { PromptTemplate } from '@/types/promptTemplate';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';

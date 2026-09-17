@@ -1,6 +1,5 @@
-import React from 'react';
 import { useForm } from '@inertiajs/react';
-import { AlertTriangle, X, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2 } from 'lucide-react';
 import { PromptTemplate } from '@/types/promptTemplate';
 
 interface Props {

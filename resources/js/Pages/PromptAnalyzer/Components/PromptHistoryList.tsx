@@ -1,24 +1,8 @@
-import React from 'react';
 import {
     Clock,
     ArrowUpRight,
 } from 'lucide-react';
-
-// import {
-//     PromptStatus,
-//     AnalyzedStructure,
-// } from './PromptOutputPanel';
 import { PromptStatus, RecentPrompt } from '@/types/prompt'
-
-// export interface RecentPrompt {
-//     id: number;
-//     input_content: string;
-//     status: Exclude<PromptStatus, null>;
-//     analyzed_structure: AnalyzedStructure | null;
-//     final_prompt: string | null;
-//     target_platform?: string | null;
-//     created_at: string;
-// }
 
 interface PromptHistoryListProps {
     history: RecentPrompt[];

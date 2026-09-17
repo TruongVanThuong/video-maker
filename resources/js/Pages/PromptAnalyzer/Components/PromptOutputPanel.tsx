@@ -1,26 +1,17 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Film,
     Clapperboard,
-    Video,
     AlertCircle,
-    CheckCircle2,
     Clock,
     Wand2,
-    Copy,
     Check,
     RotateCcw,
-    Send,
-    SlidersHorizontal,
     MonitorPlay,
     RefreshCcw,
 } from 'lucide-react';
-
 import ContextCard from './ContextCard';
-// import { PromptStatus, PromptResult } from '@/types/prompt'
-
 import axios from 'axios';
-// import { Wand2, RefreshCcw, AlertCircle } from 'lucide-react';
 import { PromptResult, PromptStatus, REFINABLE_FIELDS, MAX_REFINEMENTS } from '@/types/prompt';
 
 

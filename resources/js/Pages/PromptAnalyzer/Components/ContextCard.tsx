@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Pencil, Check, X as XIcon } from 'lucide-react';
 
 interface ContextCardProps {
