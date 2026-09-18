@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import {
     Film,
     Clapperboard,
@@ -9,6 +10,7 @@ import {
     RotateCcw,
     MonitorPlay,
     RefreshCcw,
+    Rocket,
 } from 'lucide-react';
 import ContextCard from './ContextCard';
 import axios from 'axios';
@@ -321,6 +323,30 @@ export default function PromptOutputPanel({
                 {/* COMPLETED */}
                 {status === 'completed' && result && (
                     <div className="space-y-6">
+                        {/* CONVERSION CTA BUTTON TO STUDIO */}
+                        <div className="bg-gradient-to-r from-violet-950/80 via-indigo-950/80 to-emerald-950/80 p-4 rounded-xl border border-violet-800/60 shadow-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                                    <Rocket className="w-4 h-4 text-amber-400 animate-pulse" />
+                                    Tùy chọn A: Chuyển đổi thành Video Project
+                                </span>
+                                <span className="text-[10px] bg-violet-900/60 text-violet-300 px-2 py-0.5 rounded font-semibold">
+                                    Studio Workspace
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-300">
+                                Chuyển prompt này thành Project để chỉnh sửa kịch bản phân cảnh, sinh Voice & Ảnh thử nghiệm, và render video hoàn chỉnh.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => router.post(`/prompts/${result.id}/convert`)}
+                                className="w-full py-2.5 px-4 bg-gradient-to-r from-violet-600 via-indigo-600 to-emerald-600 hover:from-violet-500 hover:to-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center space-x-2 mt-2"
+                            >
+                                <Rocket className="w-4 h-4 text-amber-300" />
+                                <span>🚀 Chuyển sang Video Project Studio</span>
+                            </button>
+                        </div>
+
                         {/* FINAL PROMPT — thêm khả năng edit trực tiếp */}
                         <div className="bg-gray-950 border border-violet-900/50 rounded-xl p-4 space-y-3">
                             <div className="flex items-center justify-between border-b border-gray-800/80 pb-2">

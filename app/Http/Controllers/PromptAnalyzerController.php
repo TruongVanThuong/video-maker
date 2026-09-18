@@ -110,6 +110,15 @@ class PromptAnalyzerController extends Controller
         return response()->json(['status' => 'processing']);
     }
 
+    public function convertToProject(ContentPrompt $contentPrompt, \App\Actions\ConvertContentPromptToProjectAction $action)
+    {
+        $this->authorizeOwner($contentPrompt);
+
+        $project = $action->execute($contentPrompt);
+
+        return redirect()->route('projects.studio', $project->id);
+    }
+
     private function authorizeOwner(ContentPrompt $contentPrompt): void
     {
         abort_if($contentPrompt->user_id !== auth()->id(), 403);

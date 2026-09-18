@@ -16,6 +16,7 @@ class Project extends Model
      */
     protected $fillable = [
         'user_id',
+        'content_prompt_id',
         'title',
         'source_type',
         'raw_input',
@@ -30,6 +31,14 @@ class Project extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Mối quan hệ: Dự án có thể được chuyển đổi từ một ContentPrompt.
+     */
+    public function contentPrompt(): BelongsTo
+    {
+        return $this->belongsTo(ContentPrompt::class);
     }
 
     /**

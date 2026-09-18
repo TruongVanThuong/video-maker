@@ -41,6 +41,21 @@ Route::middleware('auth')->group(function () {
         ->name('prompts.update');
     Route::post('/prompts/{contentPrompt}/refine', [PromptAnalyzerController::class, 'refine'])
         ->name('prompts.refine');
+    Route::post('/prompts/{contentPrompt}/convert', [PromptAnalyzerController::class, 'convertToProject'])
+        ->name('prompts.convert');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/projects/{project}/studio', [\App\Http\Controllers\ProjectStudioController::class, 'studio'])
+        ->name('projects.studio');
+    Route::patch('/scenes/{scene}', [\App\Http\Controllers\ProjectStudioController::class, 'updateScene'])
+        ->name('scenes.update');
+    Route::post('/scenes/{scene}/generate-voice', [\App\Http\Controllers\ProjectStudioController::class, 'generateVoice'])
+        ->name('scenes.generate-voice');
+    Route::post('/scenes/{scene}/generate-image', [\App\Http\Controllers\ProjectStudioController::class, 'generateImage'])
+        ->name('scenes.generate-image');
+    Route::post('/projects/{project}/render', [\App\Http\Controllers\ProjectStudioController::class, 'startRender'])
+        ->name('projects.render');
 });
 
 Route::middleware('auth')->group(function () {

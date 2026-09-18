@@ -22,6 +22,8 @@ class ContentPrompt extends Model
         'analyzed_structure',
         'final_prompt',
         'status',
+        'conversion_status',
+        'project_id',
         'error_message',
         'refinement_count',
         'is_manually_edited',
@@ -43,6 +45,16 @@ class ContentPrompt extends Model
             PromptTemplate::class,
             'prompt_template_id'
         );
+    }
+
+    public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Project::class, 'content_prompt_id');
+    }
+
+    public function latestProject(): BelongsTo
+    {
+        return $this->belongsTo(Project::class, 'project_id');
     }
 
     public function scopeOfUser(Builder $query, int $userId): Builder
