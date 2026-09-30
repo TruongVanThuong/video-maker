@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import SceneCard, { Scene, VoiceProfile } from './Components/SceneCard';
-import RenderProgressModal from './Components/RenderProgressModal';
+import RenderProgressModal, { RenderStatus } from './Components/RenderProgressModal';
 
 interface Project {
     id: number;
@@ -28,6 +28,10 @@ interface Project {
     status: string;
     batch_id?: string | null;
     render_job_id?: string | null;
+    video_url?: string | null;
+    video_path?: string | null;
+    render_error?: string | null;
+    rendered_at?: string | null;
     scenes: Scene[];
     created_at?: string;
 }
@@ -46,7 +50,7 @@ interface PageProps {
 }
 
 export default function ProjectStudio() {
-    const { auth, project: initialProject, voiceProfiles = [] } = usePage<PageProps>().props;
+    const { project: initialProject, voiceProfiles = [] } = usePage<PageProps>().props;
 
     const [project, setProject] = useState<Project>(initialProject);
     const [scenes, setScenes] = useState<Scene[]>(initialProject.scenes || []);
@@ -61,10 +65,18 @@ export default function ProjectStudio() {
         );
     };
 
-    const handleStartRenderBatch = async () => {
+    const handleProjectUpdated = (updatedProject: RenderStatus) => {
+        setProject((prev) => ({ ...prev, ...updatedProject }));
+    };
+
+    const handleStartRenderBatch = async () => { // async (force = false)
         setIsRendering(true);
         setNotification(null);
         try {
+            // const isCurrentlyBusy = ['processing', 'rendering'].includes(project.status);
+            // const response = await axios.post(`/projects/${project.id}/render`, {
+            //     force: force || isCurrentlyBusy,
+            // });
             const response = await axios.post(`/projects/${project.id}/render`);
             if (response.data.success) {
                 setProject(response.data.project);
@@ -87,7 +99,6 @@ export default function ProjectStudio() {
 
     return (
         <AuthenticatedLayout
-            user={auth.user}
             header={
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center space-x-3">
@@ -106,8 +117,12 @@ export default function ProjectStudio() {
                                 <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
                                     project.status === 'rendering'
                                         ? 'bg-indigo-950 text-indigo-300 border-indigo-700/50 animate-pulse'
+                                        : project.status === 'processing'
+                                        ? 'bg-amber-950 text-amber-300 border-amber-700/50 animate-pulse'
                                         : project.status === 'completed'
                                         ? 'bg-emerald-950 text-emerald-300 border-emerald-700/50'
+                                        : project.status === 'failed'
+                                        ? 'bg-rose-950 text-rose-300 border-rose-700/50'
                                         : 'bg-gray-800 text-gray-300 border-gray-700'
                                 }`}>
                                     {project.status}
@@ -263,7 +278,8 @@ export default function ProjectStudio() {
             <RenderProgressModal
                 isOpen={showRenderModal}
                 onClose={() => setShowRenderModal(false)}
-                renderJobId={project.render_job_id}
+                projectId={project.id}
+                onProjectUpdated={handleProjectUpdated}
             />
         </AuthenticatedLayout>
     );

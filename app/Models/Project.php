@@ -8,9 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class Project extends Model
 {
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_PROCESSING = 'processing';
+
+    public const STATUS_RENDERING = 'rendering';
+
+    public const STATUS_COMPLETED = 'completed';
+
+    public const STATUS_FAILED = 'failed';
+
     /**
      * Các thuộc tính có thể fill hàng loạt (Mass Assignable).
      */
@@ -23,6 +34,20 @@ class Project extends Model
         'status',
         'batch_id',
         'render_job_id',
+        'video_path',
+        'rendered_at',
+        'render_error',
+    ];
+
+    /**
+     * Tự động serialize `video_url` vào JSON / Inertia responses.
+     */
+    protected $appends = [
+        'video_url',
+    ];
+
+    protected $casts = [
+        'rendered_at' => 'datetime',
     ];
 
     /**
@@ -63,5 +88,23 @@ class Project extends Model
     public function aiJobs(): HasMany
     {
         return $this->hasMany(AiJob::class);
+    }
+
+    /**
+     * URL công khai của video hoàn chỉnh (video_path lưu relative path hoặc đường dẫn tuyệt đối).
+     */
+    public function getVideoUrlAttribute(): ?string
+    {
+        $path = $this->video_path;
+
+        if (empty($path)) {
+            return null;
+        }
+
+        if (preg_match('/^https?:\/\//i', $path) === 1) {
+            return $path;
+        }
+
+        return Storage::disk('public')->url($path);
     }
 }

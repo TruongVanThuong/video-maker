@@ -34,6 +34,8 @@ export interface Scene {
     camera_rule: CameraRule | null;
     audio_path: string | null;
     image_path: string | null;
+    audio_url?: string | null;
+    image_url?: string | null;
     duration: number;
     created_at?: string;
     updated_at?: string;
@@ -63,7 +65,7 @@ const CAMERA_MOTIONS = [
 
 export default function SceneCard({ scene, voiceProfiles, onSceneUpdated }: SceneCardProps) {
     const [dialogue, setDialogue] = useState(scene.dialogue || '');
-    const [voiceId, setVoiceId] = useState(scene.voice_id || '21m00Tcm4TlvDq8ikWAM');
+    const [voiceId, setVoiceId] = useState(scene.voice_id || 'Kore');
     const [imagePrompt, setImagePrompt] = useState(scene.image_prompt || '');
     const [cameraMotion, setCameraMotion] = useState(
         scene.camera_rule?.motion || 'pan_right'
@@ -233,9 +235,9 @@ export default function SceneCard({ scene, voiceProfiles, onSceneUpdated }: Scen
                             <span>{isGeneratingVoice ? 'Đang sinh Voice...' : 'Sinh Voice thử'}</span>
                         </button>
 
-                        {scene.audio_path && (
+                        {scene.audio_url && (
                             <audio
-                                src={scene.audio_path}
+                                src={scene.audio_url}
                                 controls
                                 className="h-8 w-full sm:w-48 text-xs accent-violet-500"
                             />
@@ -295,10 +297,10 @@ export default function SceneCard({ scene, voiceProfiles, onSceneUpdated }: Scen
                             <span>{isGeneratingImage ? 'Đang sinh Ảnh...' : 'Sinh Ảnh thử'}</span>
                         </button>
 
-                        {scene.image_path && (
+                        {scene.image_url && (
                             <div className="relative group">
                                 <img
-                                    src={scene.image_path}
+                                    src={scene.image_url}
                                     alt={`Scene #${scene.scene_index}`}
                                     className="w-16 h-10 object-cover rounded-lg border border-gray-700 shadow-sm cursor-pointer hover:opacity-90 transition"
                                     onClick={() => setShowImageLightbox(true)}
@@ -343,7 +345,7 @@ export default function SceneCard({ scene, voiceProfiles, onSceneUpdated }: Scen
             </div>
 
             {/* LIGHTBOX MODAL FOR IMAGE PREVIEW */}
-            {showImageLightbox && scene.image_path && (
+            {showImageLightbox && scene.image_url && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
                     <div className="relative max-w-3xl w-full bg-gray-900 border border-gray-800 rounded-2xl p-4 overflow-hidden shadow-2xl">
                         <button
@@ -356,7 +358,7 @@ export default function SceneCard({ scene, voiceProfiles, onSceneUpdated }: Scen
                             Xem Trước Ảnh Phân Cảnh #{scene.scene_index}
                         </h4>
                         <img
-                            src={scene.image_path}
+                            src={scene.image_url}
                             alt={`Preview Scene #${scene.scene_index}`}
                             className="w-full max-h-[70vh] object-contain rounded-xl border border-gray-800"
                         />

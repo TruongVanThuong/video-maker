@@ -1,11 +1,12 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjectStudioController;
+use App\Http\Controllers\PromptAnalyzerController;
+use App\Http\Controllers\PromptTemplateController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\PromptAnalyzerController;
-use App\Http\Controllers\PromptTemplateController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -46,16 +47,18 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/projects/{project}/studio', [\App\Http\Controllers\ProjectStudioController::class, 'studio'])
+    Route::get('/projects/{project}/studio', [ProjectStudioController::class, 'studio'])
         ->name('projects.studio');
-    Route::patch('/scenes/{scene}', [\App\Http\Controllers\ProjectStudioController::class, 'updateScene'])
+    Route::patch('/scenes/{scene}', [ProjectStudioController::class, 'updateScene'])
         ->name('scenes.update');
-    Route::post('/scenes/{scene}/generate-voice', [\App\Http\Controllers\ProjectStudioController::class, 'generateVoice'])
+    Route::post('/scenes/{scene}/generate-voice', [ProjectStudioController::class, 'generateVoice'])
         ->name('scenes.generate-voice');
-    Route::post('/scenes/{scene}/generate-image', [\App\Http\Controllers\ProjectStudioController::class, 'generateImage'])
+    Route::post('/scenes/{scene}/generate-image', [ProjectStudioController::class, 'generateImage'])
         ->name('scenes.generate-image');
-    Route::post('/projects/{project}/render', [\App\Http\Controllers\ProjectStudioController::class, 'startRender'])
+    Route::post('/projects/{project}/render', [ProjectStudioController::class, 'startRender'])
         ->name('projects.render');
+    Route::get('/projects/{project}/render-status', [ProjectStudioController::class, 'renderStatus'])
+        ->name('projects.render-status');
 });
 
 Route::middleware('auth')->group(function () {

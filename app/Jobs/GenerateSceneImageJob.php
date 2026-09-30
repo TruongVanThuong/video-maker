@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\Scene;
-use App\Services\FalAiImageService;
+use App\Services\SceneAssetGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,17 +16,14 @@ class GenerateSceneImageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 3;
+
     public function __construct(
         public Scene $scene
     ) {}
 
-    public function handle(FalAiImageService $imageService): void
+    public function handle(SceneAssetGenerator $assetGenerator): void
     {
-        $prompt = $this->scene->image_prompt ?: $this->scene->dialogue;
-        $imagePath = $imageService->generateImage($prompt);
-
-        $this->scene->update([
-            'image_path' => $imagePath,
-        ]);
+        $assetGenerator->ensureImage($this->scene);
     }
 }
