@@ -1,0 +1,43 @@
+import type { Voucher } from "../../types";
+
+export const vouchers: Voucher[] = [
+    {
+        id: "shopee-15",
+        marketplace: "shopee",
+        marketplaceName: "Shopee Mall",
+        title: "Giảm 15% Max 100K",
+        description: "Đơn từ 250k • Toàn sàn Shopee",
+        remaining: 8,
+        badge: "Mới",
+        badgeClass: "bg-surface-container-high text-on-surface",
+        actionLabel: "Lưu Mã",
+        code: "SHP15MAX",
+        icon: "content_copy",
+    },
+    {
+        id: "lazada-500",
+        marketplace: "lazada",
+        marketplaceName: "LazFlash",
+        title: "Hoàn Tiền Max 500K",
+        description: "Đơn đồ công nghệ & gia dụng",
+        remaining: 23,
+        badge: "Hot",
+        badgeClass: "bg-blue-100 text-blue-800",
+        actionLabel: "Gom Ngay",
+        code: "LAZMAX500",
+        icon: "bolt",
+    },
+    {
+        id: "tiktok-70",
+        marketplace: "tiktok",
+        marketplaceName: "TikTok Live",
+        title: "Giảm 70K + Freeship",
+        description: "Đơn live stream từ 150k",
+        remaining: 12,
+        badge: "Ship 0Đ",
+        badgeClass: "bg-tertiary-container text-on-tertiary",
+        actionLabel: "Lấy Mã",
+        code: "TT70KFREE",
+        icon: "content_copy",
+    },
+];
