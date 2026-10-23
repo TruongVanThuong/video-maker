@@ -129,7 +129,7 @@ export default function ProjectStudio() {
                                 </span>
                             </div>
                             <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                <span>Project Studio Workspace</span>
+                                <span>Không gian làm việc Project Studio</span>
                                 <span>•</span>
                                 <span>Nguồn: {project.source_type.toUpperCase()}</span>
                             </p>
@@ -151,7 +151,7 @@ export default function ProjectStudio() {
                         ) : (
                             <>
                                 <Rocket className="w-5 h-5 text-amber-300" />
-                                <span>🚀 Bắt đầu Render Video Hoàn Chỉnh</span>
+                                <span>Bắt đầu Render Video Hoàn Chỉnh</span>
                             </>
                         )}
                     </button>
@@ -172,7 +172,7 @@ export default function ProjectStudio() {
                             </div>
                             <div>
                                 <span className="text-xs font-semibold text-gray-400 uppercase">Tổng Phân Cảnh</span>
-                                <p className="text-xl font-extrabold text-white">{scenes.length} Scenes</p>
+                                <p className="text-xl font-extrabold text-white">{scenes.length} phân cảnh</p>
                             </div>
                         </div>
 
@@ -191,7 +191,7 @@ export default function ProjectStudio() {
                                 <Volume2 className="w-5 h-5" />
                             </div>
                             <div>
-                                <span className="text-xs font-semibold text-gray-400 uppercase">Voice Ready</span>
+                                <span className="text-xs font-semibold text-gray-400 uppercase">Giọng đọc sẵn sàng</span>
                                 <p className="text-xl font-extrabold text-white">{voiceReadyCount} / {scenes.length}</p>
                             </div>
                         </div>
@@ -201,7 +201,7 @@ export default function ProjectStudio() {
                                 <ImageIcon className="w-5 h-5" />
                             </div>
                             <div>
-                                <span className="text-xs font-semibold text-gray-400 uppercase">Ảnh AI Ready</span>
+                                <span className="text-xs font-semibold text-gray-400 uppercase">Ảnh AI sẵn sàng</span>
                                 <p className="text-xl font-extrabold text-white">{imageReadyCount} / {scenes.length}</p>
                             </div>
                         </div>
@@ -267,7 +267,7 @@ export default function ProjectStudio() {
                             className="px-6 py-3 bg-gradient-to-r from-violet-600 via-indigo-600 to-emerald-600 hover:from-violet-500 hover:to-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition flex items-center justify-center space-x-2 shrink-0"
                         >
                             <Rocket className="w-4 h-4 text-amber-300" />
-                            <span>🚀 Bắt đầu Render Video Hoàn Chỉnh</span>
+                            <span>Bắt đầu Render Video Hoàn Chỉnh</span>
                         </button>
                     </div>
 

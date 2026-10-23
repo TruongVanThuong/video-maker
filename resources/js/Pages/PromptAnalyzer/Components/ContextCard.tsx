@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pencil, Check, X as XIcon } from 'lucide-react';
+import { t } from '@/i18n';
 
 interface ContextCardProps {
     title: string;
@@ -96,7 +97,7 @@ export default function ContextCard({
                     </div>
                 </div>
             ) : (
-                <p className={`text-xs font-semibold ${color} leading-relaxed`}>{value || 'N/A'}</p>
+                <p className={`text-xs font-semibold ${color} leading-relaxed`}>{value || t('common.na')}</p>
             )}
         </div>
     );

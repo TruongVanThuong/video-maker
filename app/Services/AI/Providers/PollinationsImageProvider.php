@@ -28,7 +28,7 @@ final class PollinationsImageProvider implements ImageGeneratorInterface
     public function generate(string $prompt): GeneratedImageResult
     {
         if (trim($prompt) === '') {
-            throw new RuntimeException('Image prompt cannot be empty.');
+            throw new RuntimeException('Prompt hình ảnh không được để trống.');
         }
 
         $imageUrl = 'https://image.pollinations.ai/prompt/'.rawurlencode($prompt).'?'

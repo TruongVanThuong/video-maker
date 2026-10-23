@@ -70,7 +70,7 @@ class PollRenderStatusJobTest extends TestCase
         $service = Mockery::mock(CreatomateRenderService::class);
         $service->shouldReceive('getRenderStatus')->never();
 
-        $this->expectExceptionMessage('no render_job_id');
+        $this->expectExceptionMessage('render_job_id');
 
         (new PollRenderStatusJob($project))->handle($service);
     }

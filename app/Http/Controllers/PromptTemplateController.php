@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SavePromptTemplateRequest;
 use App\Models\PromptTemplate;
 use App\Repositories\PromptTemplateRepository;
+use App\Services\AI\LanguagePolicy;
 use App\Services\GeminiApiClient;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -39,7 +40,7 @@ class PromptTemplateController extends Controller
         $validated = $request->validated();
         $this->promptTemplateRepository->create($validated);
 
-        return back()->with('success', 'Prompt Template created successfully.');
+        return back()->with('success', 'Tạo Prompt Template thành công.');
     }
 
     public function update(SavePromptTemplateRequest $request, PromptTemplate $promptTemplate)
@@ -47,31 +48,31 @@ class PromptTemplateController extends Controller
         $validated = $request->validated();
         $this->promptTemplateRepository->update($promptTemplate->id, $validated);
 
-        return back()->with('success', 'Prompt Template updated successfully.');
+        return back()->with('success', 'Cập nhật Prompt Template thành công.');
     }
 
     public function duplicate(PromptTemplate $promptTemplate)
     {
         $this->promptTemplateRepository->duplicate($promptTemplate->id);
 
-        return back()->with('success', 'Prompt Template duplicated successfully.');
+        return back()->with('success', 'Nhân bản Prompt Template thành công.');
     }
 
     public function toggleStatus(PromptTemplate $promptTemplate)
     {
         $this->promptTemplateRepository->toggleStatus($promptTemplate->id);
 
-        return back()->with('success', 'Template status updated.');
+        return back()->with('success', 'Cập nhật trạng thái template thành công.');
     }
 
     public function destroy(PromptTemplate $promptTemplate)
     {
         $this->promptTemplateRepository->delete($promptTemplate->id);
 
-        return back()->with('success', 'Prompt Template deleted successfully.');
+        return back()->with('success', 'Xóa Prompt Template thành công.');
     }
 
-    public function test(Request $request, GeminiApiClient $geminiClient)
+    public function test(Request $request, GeminiApiClient $geminiClient, LanguagePolicy $languagePolicy)
     {
         $request->validate([
             'system_instruction' => 'required|string',
@@ -79,18 +80,18 @@ class PromptTemplateController extends Controller
         ]);
 
         try {
-            $systemInstruction = $request->input('system_instruction');
-            $userPrompt = "Analyze the following sample content into a video prompt:\n\n" . $request->input('sample_input');
-            
+            $systemInstruction = $languagePolicy->withOutputLanguageRule($request->input('system_instruction'));
+            $userPrompt = "Phân tích nội dung mẫu sau thành một prompt video:\n\n" . $request->input('sample_input');
+
             $jsonSchema = [
                 'type' => 'object',
                 'properties' => [
-                    'subject' => ['type' => 'string', 'description' => 'Main subject'],
-                    'action' => ['type' => 'string', 'description' => 'Action performed'],
-                    'environment' => ['type' => 'string', 'description' => 'Environment'],
-                    'camera_movement' => ['type' => 'string', 'description' => 'Camera movement'],
-                    'lighting_and_atmosphere' => ['type' => 'string', 'description' => 'Lighting'],
-                    'final_video_prompt' => ['type' => 'string', 'description' => 'Final video prompt in English'],
+                    'subject' => ['type' => 'string', 'description' => 'Chủ thể chính'],
+                    'action' => ['type' => 'string', 'description' => 'Hành động của chủ thể'],
+                    'environment' => ['type' => 'string', 'description' => 'Bối cảnh'],
+                    'camera_movement' => ['type' => 'string', 'description' => 'Chuyển động camera'],
+                    'lighting_and_atmosphere' => ['type' => 'string', 'description' => 'Ánh sáng và không khí'],
+                    'final_video_prompt' => ['type' => 'string', 'description' => 'Prompt video hoàn chỉnh bằng ' . $languagePolicy->languageName()],
                 ],
                 'required' => ['subject', 'action', 'environment', 'camera_movement', 'lighting_and_atmosphere', 'final_video_prompt'],
             ];

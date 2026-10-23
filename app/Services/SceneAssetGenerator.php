@@ -23,7 +23,7 @@ class SceneAssetGenerator
         }
 
         if (trim((string) $scene->dialogue) === '') {
-            throw new \RuntimeException('Cannot generate voice for a scene without dialogue.');
+            throw new \RuntimeException('Không thể tạo giọng đọc cho cảnh không có lời thoại.');
         }
 
         try {

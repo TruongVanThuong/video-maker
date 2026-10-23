@@ -81,7 +81,7 @@ class PromptTemplateRepository
         $original = $this->model->findOrFail($id);
         
         return $this->model->create([
-            'name' => 'Copy of ' . $original->name,
+            'name' => 'Bản sao của ' . $original->name,
             'category' => $original->category,
             'system_instruction' => $original->system_instruction,
             'is_active' => $original->is_active,

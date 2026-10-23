@@ -23,7 +23,7 @@ final class MockImageProvider implements ImageGeneratorInterface
         $binary = Http::timeout(10)->get($mockImageUrl);
 
         if ($binary->failed()) {
-            throw new RuntimeException('Failed to download mock placeholder image ('.$binary->status().').');
+            throw new RuntimeException('Không tải được ảnh placeholder mock ('.$binary->status().').');
         }
 
         $path = 'images/'.Str::uuid()->toString().'.png';

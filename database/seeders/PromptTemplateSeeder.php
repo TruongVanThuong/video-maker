@@ -13,9 +13,9 @@ class PromptTemplateSeeder extends Seeder
     {
         // database/seeders/PromptTemplateSeeder.php
         PromptTemplate::create([
-            'name' => 'Cinematic Realistic Video',
+            'name' => 'Video điện ảnh chân thực',
             'category' => 'cinematic',
-            'system_instruction' => 'Analyze input text and convert into a highly detailed cinematic video prompt. Focus on camera movement, lighting, subject action, atmosphere, and high resolution details for AI Video Generator.',
+            'system_instruction' => 'Phân tích văn bản đầu vào và chuyển thành một prompt video điện ảnh chi tiết cao. Tập trung vào chuyển động camera, ánh sáng, hành động của chủ thể, không khí và chi tiết độ phân giải cao cho AI Video Generator.',
         ]);
     }
 }

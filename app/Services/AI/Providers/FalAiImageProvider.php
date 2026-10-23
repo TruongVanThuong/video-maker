@@ -28,7 +28,7 @@ final class FalAiImageProvider implements ImageGeneratorInterface
     public function generate(string $prompt): GeneratedImageResult
     {
         if (trim($prompt) === '') {
-            throw new RuntimeException('Image prompt cannot be empty.');
+            throw new RuntimeException('Prompt hình ảnh không được để trống.');
         }
 
         $response = Http::withHeaders([
@@ -56,7 +56,7 @@ final class FalAiImageProvider implements ImageGeneratorInterface
         $imageBinary = Http::timeout(self::TIMEOUT_SECONDS)->get($imageUrl);
 
         if ($imageBinary->failed()) {
-            throw new RuntimeException('Failed to download generated image from Fal.ai ('.$imageBinary->status().').');
+            throw new RuntimeException('Không tải được ảnh đã tạo từ Fal.ai ('.$imageBinary->status().').');
         }
 
         $path = 'images/'.Str::uuid()->toString().'.png';

@@ -48,6 +48,8 @@ return [
 
     'ai' => [
         'demo_mode' => (bool) env('AI_DEMO_MODE', false),
+        'content_language' => env('AI_CONTENT_LANGUAGE', 'vi'),
+        'provider_prompt_language' => env('AI_PROVIDER_PROMPT_LANGUAGE', 'vi'),
     ],
 
     'falai' => [
@@ -69,10 +71,12 @@ return [
 
     'creatomate' => [
         'key' => env('CREATOMATE_API_KEY'),
-        'template_id' => env('CREATOMATE_TEMPLATE_ID'),
-        'endpoint' => env('CREATOMATE_ENDPOINT', 'https://api.creatomate.com/v1'),
+        'endpoint' => env('CREATOMATE_ENDPOINT', 'https://api.creatomate.com/v2'),
         'timeout' => (int) env('CREATOMATE_TIMEOUT', 30),
         'webhook_url' => env('VIDEO_RENDER_WEBHOOK_URL', '/api/webhooks/creatomate'),
         'webhook_token' => env('VIDEO_RENDER_WEBHOOK_TOKEN'),
+        'output_width' => (int) env('CREATOMATE_OUTPUT_WIDTH', 1920),
+        'output_height' => (int) env('CREATOMATE_OUTPUT_HEIGHT', 1080),
+        'frame_rate' => (int) env('CREATOMATE_FRAME_RATE', 30),
     ],
 ];

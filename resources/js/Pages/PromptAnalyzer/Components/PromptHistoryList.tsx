@@ -1,11 +1,20 @@
 import {
     Clock,
     ArrowUpRight,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
-import { PromptStatus, RecentPrompt } from '@/types/prompt'
+import { router } from '@inertiajs/react';
+import {
+    PromptStatus,
+    RecentPrompt,
+    PromptPaginationMeta,
+} from '@/types/prompt';
+import { t } from '@/i18n';
 
 interface PromptHistoryListProps {
     history: RecentPrompt[];
+    pagination: PromptPaginationMeta;
     activeId: number | null;
     onSelect: (item: RecentPrompt) => void;
 }
@@ -29,9 +38,26 @@ function getStatusClass(status: PromptStatus) {
 
 export default function PromptHistoryList({
     history,
+    pagination,
     activeId,
     onSelect,
 }: PromptHistoryListProps) {
+    // Các link phân trang của Laravel: label dạng số là các trang,
+    // còn lại là Previous/Next nên được xử lý riêng.
+    const pageLinks = pagination.links.filter((link) =>
+        /^\d+$/.test(link.label.trim())
+    );
+
+    const goToPage = (url: string | null) => {
+        if (!url) return;
+
+        router.get(url, {}, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
     return (
         <div className="bg-gray-900/90 backdrop-blur-xl border border-gray-800 rounded-2xl p-6 shadow-2xl space-y-4">
             {/* HEADER */}
@@ -40,19 +66,21 @@ export default function PromptHistoryList({
                     <Clock className="w-5 h-5 text-violet-400" />
 
                     <h3 className="text-lg font-bold text-white">
-                        Recent Prompts History
+                        {t('analyzer.history.title')}
                     </h3>
                 </div>
 
                 <span className="text-xs text-gray-400">
-                    Showing last {history.length} items
+                    {t('analyzer.history.showing', {
+                        count: pagination.total,
+                    })}
                 </span>
             </div>
 
             {/* EMPTY */}
             {history.length === 0 ? (
                 <div className="py-8 text-center text-xs text-gray-500">
-                    No recent history items found.
+                    {t('analyzer.history.empty')}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -77,7 +105,7 @@ export default function PromptHistoryList({
                                                 item.status
                                             )}`}
                                         >
-                                            {item.status}
+                                            {t(`status.${item.status}`)}
                                         </span>
 
                                         <span className="text-[11px] text-gray-500">
@@ -94,17 +122,73 @@ export default function PromptHistoryList({
                                     <span className="truncate max-w-[150px]">
                                         {item.final_prompt
                                             ? item.final_prompt
-                                            : 'No final prompt yet'}
+                                            : t('analyzer.history.no_final')}
                                     </span>
 
                                     <span className="text-violet-400 font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                                        View
+                                        {t('analyzer.history.view')}
                                         <ArrowUpRight className="w-3 h-3" />
                                     </span>
                                 </div>
                             </button>
                         );
                     })}
+                </div>
+            )}
+
+            {/* PAGINATION */}
+            {pagination.last_page > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-800">
+                    <span className="text-[11px] text-gray-500">
+                        {t('analyzer.history.page', {
+                            current: pagination.current_page,
+                            total: pagination.last_page,
+                        })}
+                    </span>
+
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                goToPage(pagination.prev_page_url)
+                            }
+                            disabled={!pagination.prev_page_url}
+                            className="px-2.5 py-1.5 rounded-xl text-xs font-bold transition bg-gray-900 border border-gray-800 text-gray-300 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900 flex items-center gap-1"
+                        >
+                            <ChevronLeft className="w-3.5 h-3.5" />
+                            <span>{t('analyzer.history.prev')}</span>
+                        </button>
+
+                        {pageLinks.map((link, index) => (
+                            <button
+                                type="button"
+                                key={`${link.label}-${index}`}
+                                onClick={() => goToPage(link.url)}
+                                disabled={!link.url || link.active}
+                                className={`min-w-[2rem] px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                                    link.active
+                                        ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
+                                        : link.url
+                                        ? 'bg-gray-900 border border-gray-800 text-gray-300 hover:bg-gray-800'
+                                        : 'bg-gray-950 border border-gray-900 text-gray-600 cursor-not-allowed'
+                                }`}
+                            >
+                                {link.label}
+                            </button>
+                        ))}
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                goToPage(pagination.next_page_url)
+                            }
+                            disabled={!pagination.next_page_url}
+                            className="px-2.5 py-1.5 rounded-xl text-xs font-bold transition bg-gray-900 border border-gray-800 text-gray-300 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900 flex items-center gap-1"
+                        >
+                            <span>{t('analyzer.history.next')}</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

@@ -204,7 +204,7 @@ export default function SceneCard({ scene, voiceProfiles, onSceneUpdated }: Scen
                     {/* Voice Profile Dropdown */}
                     <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-gray-400">
-                            Hồ sơ Giọng Đọc (ElevenLabs Voice Profile)
+                            Hồ sơ Giọng Đọc (Gemini TTS Voice)
                         </label>
                         <select
                             value={voiceId}

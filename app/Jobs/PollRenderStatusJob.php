@@ -35,7 +35,7 @@ class PollRenderStatusJob implements ShouldQueue
         }
 
         if (empty($this->project->render_job_id)) {
-            throw new RuntimeException('Project has no render_job_id to poll.');
+            throw new RuntimeException('Dự án không có render_job_id để kiểm tra trạng thái.');
         }
 
         try {
@@ -64,7 +64,7 @@ class PollRenderStatusJob implements ShouldQueue
         if (in_array($status['status'], ['failed', 'error', 'canceled', 'cancelled'], true)) {
             $this->project->update([
                 'status' => Project::STATUS_FAILED,
-                'render_error' => $status['error'] ?: 'External render engine reported a failure.',
+                'render_error' => $status['error'] ?: 'Engine render bên ngoài báo lỗi.',
             ]);
 
             return;
@@ -77,7 +77,7 @@ class PollRenderStatusJob implements ShouldQueue
     {
         $this->project->update([
             'status' => Project::STATUS_FAILED,
-            'render_error' => 'Render timeout: '.$e->getMessage(),
+            'render_error' => 'Quá thời gian render: '.$e->getMessage(),
         ]);
     }
 }

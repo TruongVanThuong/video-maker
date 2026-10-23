@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/react';
 import { X, Sparkles, AlertCircle, Save, Info } from 'lucide-react';
 import { PRESET_TEMPLATE_CATEGORIES } from '@/constants/promptTemplateCategories';
 import { PromptTemplate } from '@/types/promptTemplate';
+import { t } from '@/i18n';
 
 interface Props {
     isOpen: boolean;
@@ -19,11 +20,11 @@ interface FormData {
 }
 
 const PLACEHOLDER_VARIABLES = [
-    { tag: '{subject}', desc: 'Main subject or character' },
-    { tag: '{action}', desc: 'Subject motion or activity' },
-    { tag: '{environment}', desc: 'Setting, weather, surrounding' },
-    { tag: '{camera_movement}', desc: 'Pan, zoom, orbit, tracking shot' },
-    { tag: '{lighting}', desc: 'Atmosphere, color grading, golden hour' },
+    { tag: '{subject}', desc: t('var.subject') },
+    { tag: '{action}', desc: t('var.action') },
+    { tag: '{environment}', desc: t('var.environment') },
+    { tag: '{camera_movement}', desc: t('var.camera_movement') },
+    { tag: '{lighting}', desc: t('var.lighting') },
 ];
 
 export default function TemplateEditorModal({ isOpen, onClose, template, categories }: Props) {
@@ -89,10 +90,10 @@ export default function TemplateEditorModal({ isOpen, onClose, template, categor
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-white">
-                                {isEditing ? 'Edit Prompt Template' : 'Create New Prompt Template'}
+                                {isEditing ? t('editor.edit_title') : t('editor.create_title')}
                             </h3>
                             <p className="text-xs text-gray-400">
-                                Set rule constraints to guide LLM prompt generation logic
+                                {t('editor.subtitle')}
                             </p>
                         </div>
                     </div>
@@ -110,13 +111,13 @@ export default function TemplateEditorModal({ isOpen, onClose, template, categor
                         {/* Name */}
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-                                Template Name
+                                {t('editor.name')}
                             </label>
                             <input
                                 type="text"
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
-                                placeholder="e.g. Cinematic 8K Sci-Fi"
+                                placeholder={t('editor.name_placeholder')}
                                 className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2 text-sm text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
                             />
                             {errors.name && (
@@ -129,7 +130,7 @@ export default function TemplateEditorModal({ isOpen, onClose, template, categor
                         {/* Category */}
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-                                Category
+                                {t('editor.category')}
                             </label>
                             <select
                                 value={data.category}
@@ -154,17 +155,17 @@ export default function TemplateEditorModal({ isOpen, onClose, template, categor
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-                                System Instruction Prompt
+                                {t('editor.system_instruction')}
                             </label>
                             <span className="text-xs text-gray-400 font-mono">
-                                {data.system_instruction.length} chars
+                                {t('editor.chars', { count: data.system_instruction.length })}
                             </span>
                         </div>
                         <textarea
                             rows={6}
                             value={data.system_instruction}
                             onChange={(e) => setData('system_instruction', e.target.value)}
-                            placeholder="Specify rules for the AI (e.g. Always output cinematic lighting details, emphasize high-contrast camera pan, format output strictly in English...)"
+                            placeholder={t('editor.instruction_placeholder')}
                             className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3.5 text-sm text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition font-mono leading-relaxed resize-y"
                         />
                         {errors.system_instruction && (
@@ -178,7 +179,7 @@ export default function TemplateEditorModal({ isOpen, onClose, template, categor
                     <div className="p-3.5 bg-gray-950/80 rounded-xl border border-gray-800/80 space-y-2">
                         <div className="flex items-center text-xs font-bold text-violet-300 gap-1.5">
                             <Info className="w-3.5 h-3.5 text-violet-400" />
-                            <span>Quick Variable Injection Guide</span>
+                            <span>{t('editor.variables_title')}</span>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                             {PLACEHOLDER_VARIABLES.map((v) => (
@@ -198,8 +199,8 @@ export default function TemplateEditorModal({ isOpen, onClose, template, categor
                     {/* Active Status Toggle */}
                     <div className="flex items-center justify-between p-3 bg-gray-950/50 rounded-xl border border-gray-800">
                         <div>
-                            <span className="text-xs font-bold text-gray-200">Active Status</span>
-                            <p className="text-[11px] text-gray-400">Available for selection in Prompt Studio</p>
+                            <span className="text-xs font-bold text-gray-200">{t('editor.active_status')}</span>
+                            <p className="text-[11px] text-gray-400">{t('editor.active_desc')}</p>
                         </div>
                         <button
                             type="button"
@@ -223,7 +224,7 @@ export default function TemplateEditorModal({ isOpen, onClose, template, categor
                             onClick={onClose}
                             className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold rounded-xl transition"
                         >
-                            Cancel
+                            {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
@@ -231,7 +232,7 @@ export default function TemplateEditorModal({ isOpen, onClose, template, categor
                             className="px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition flex items-center space-x-1.5"
                         >
                             <Save className="w-4 h-4" />
-                            <span>{isEditing ? 'Save Changes' : 'Create Template'}</span>
+                            <span>{isEditing ? t('editor.save_changes') : t('editor.create')}</span>
                         </button>
                     </div>
                 </form>

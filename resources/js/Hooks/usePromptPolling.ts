@@ -5,6 +5,10 @@ import { PromptResult, PromptStatus } from '@/types/prompt';
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_DURATION_MS = 5 * 60 * 1000;
 
+// Job phân tích có tries = 3 nên sau khi ghi nhận lỗi, queue vẫn có thể
+// chạy lại job. Poll thêm một khoảng ngắn để nhận kết quả của lần chạy đó.
+const FAILURE_GRACE_MS = 45 * 1000;
+
 export function usePromptPolling(initialPromptId: number | null | undefined) {
     const [activeId, setActiveId] = useState<number | null>(initialPromptId ?? null);
     const [status, setStatus] = useState<PromptStatus>(initialPromptId ? 'pending' : null);
@@ -13,6 +17,9 @@ export function usePromptPolling(initialPromptId: number | null | undefined) {
 
     const statusRef = useRef(status);
     statusRef.current = status;
+
+    const activeIdRef = useRef(activeId);
+    activeIdRef.current = activeId;
 
     useEffect(() => {
         if (initialPromptId) {
@@ -28,9 +35,18 @@ export function usePromptPolling(initialPromptId: number | null | undefined) {
         const controller = new AbortController();
         let timeoutId: number | undefined;
         const startedAt = Date.now();
+        let failedAt: number | null = null;
 
         const scheduleNext = () => {
-            if (statusRef.current === 'completed' || statusRef.current === 'failed') return;
+            const currentStatus = statusRef.current;
+
+            if (currentStatus === 'completed') return;
+
+            if (currentStatus === 'failed') {
+                failedAt ??= Date.now();
+
+                if (Date.now() - failedAt > FAILURE_GRACE_MS) return;
+            }
 
             if (Date.now() - startedAt > MAX_POLL_DURATION_MS) {
                 setStatus('failed');
@@ -67,8 +83,8 @@ export function usePromptPolling(initialPromptId: number | null | undefined) {
             controller.abort();
             if (timeoutId) window.clearTimeout(timeoutId);
         };
-        // pollNonce cho phép ép effect chạy lại (ví dụ sau khi trigger refine)
-        // dù activeId không đổi.
+        // pollNonce cho phép ép effect chạy lại (ví dụ sau khi trigger refine
+        // hoặc retry) dù activeId không đổi.
     }, [activeId, pollNonce]);
 
     const selectPromptResult = useCallback((selectedResult: PromptResult) => {
@@ -77,8 +93,20 @@ export function usePromptPolling(initialPromptId: number | null | undefined) {
         setResult(selectedResult);
     }, []);
 
-    // Gọi hàm này ngay sau khi trigger refine thành công (status trả về 'processing')
-    const markAsRefining = useCallback(() => {
+    /**
+     * Đánh dấu prompt đang xử lý và khởi động lại polling.
+     *
+     * Dùng cho refine và retry: polling phải theo dõi đúng bản ghi đang chạy.
+     * Nếu backend trả về id khác (mỗi lần phân tích là một bản ghi riêng)
+     * thì id đang theo dõi được cập nhật theo id mới.
+     */
+    const markAsProcessing = useCallback((promptId?: number | null) => {
+        if (promptId && promptId !== activeIdRef.current) {
+            activeIdRef.current = promptId;
+            setActiveId(promptId);
+            setResult(null);
+        }
+
         setStatus('processing');
         setPollNonce((n) => n + 1);
     }, []);
@@ -89,5 +117,5 @@ export function usePromptPolling(initialPromptId: number | null | undefined) {
         setResult(null);
     }, []);
 
-    return { activeId, status, result, selectPromptResult, resetPolling, markAsRefining };
+    return { activeId, status, result, selectPromptResult, resetPolling, markAsProcessing };
 }

@@ -44,6 +44,8 @@ Route::middleware('auth')->group(function () {
         ->name('prompts.refine');
     Route::post('/prompts/{contentPrompt}/convert', [PromptAnalyzerController::class, 'convertToProject'])
         ->name('prompts.convert');
+    Route::post('/prompts/{contentPrompt}/retry', [PromptAnalyzerController::class, 'retry'])
+        ->name('prompts.retry');
 });
 
 Route::middleware('auth')->group(function () {
