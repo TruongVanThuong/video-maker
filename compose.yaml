@@ -23,6 +23,7 @@ services:
             - sail
         depends_on:
             - mysql
+            - localstack
     mysql:
         image: 'mysql:8.4'
         ports:
@@ -60,6 +61,21 @@ services:
             - sail
         depends_on:
             - mysql
+    localstack:
+        image: localstack/localstack:latest
+        container_name: "${TAILSCALE_BEACON_NAME:-sail}-localstack"
+        ports:
+            - "127.0.0.1:4566:4566"            # LocalStack Gateway port
+            - "127.0.0.1:4510-4559:4510-4559"  # External services port range
+        environment:
+            - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-} # Mã Auth Token bạn thấy trên web
+            - DEBUG=${DEBUG:-0}
+            - DOCKER_HOST=unix:///var/run/docker.sock
+        volumes:
+            - "${LOCALSTACK_VOLUME_DIR:-./.localstack}:/var/lib/localstack"
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        networks:
+            - sail
 networks:
     sail:
         driver: bridge
