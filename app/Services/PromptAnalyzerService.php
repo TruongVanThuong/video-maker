@@ -3,23 +3,26 @@
 namespace App\Services;
 
 use App\Models\ContentPrompt;
+use App\Services\AI\LanguagePolicy;
 use RuntimeException;
 
 class PromptAnalyzerService
 {
     private GeminiApiClient $geminiClient;
 
-    public function __construct(GeminiApiClient $geminiClient)
+    private LanguagePolicy $languagePolicy;
+
+    public function __construct(GeminiApiClient $geminiClient, LanguagePolicy $languagePolicy)
     {
         $this->geminiClient = $geminiClient;
+        $this->languagePolicy = $languagePolicy;
     }
 
     public function analyze(ContentPrompt $contentPrompt): array
     {
         $template = $contentPrompt->template;
 
-        $systemInstruction = $template?->system_instruction
-            ?? $this->getDefaultSystemInstruction();
+        $systemInstruction = $this->buildSystemInstruction($template?->system_instruction);
 
         $userPrompt = $this->buildUserPrompt($contentPrompt->input_content, $contentPrompt->target_platform);
         $jsonSchema = $this->getVideoPromptSchema();
@@ -31,30 +34,32 @@ class PromptAnalyzerService
         );
 
         if (!is_array($data) || empty($data['final_video_prompt'])) {
-            throw new RuntimeException('Gemini returned invalid or incomplete response.');
+            throw new RuntimeException('Gemini trả về phản hồi không hợp lệ hoặc thiếu dữ liệu.');
         }
 
         return $data;
     }
 
-    private function getDefaultSystemInstruction(): string
+    private function buildSystemInstruction(?string $templateInstruction): string
     {
-        return 'You are an expert AI Video Prompt Engineer. '
-            . 'Analyze the user content and generate structured parameters '
-            . 'for AI Video Generators (Sora/Runway/Kling).';
+        if (empty($templateInstruction)) {
+            return $this->languagePolicy->defaultSystemInstruction();
+        }
+
+        return $this->languagePolicy->withOutputLanguageRule($templateInstruction);
     }
 
     private function buildUserPrompt(string $inputContent, ?string $targetPlatform = null): string
     {
-        $prompt = "Analyze the following content into a video prompt:\n\n" . $inputContent;
+        $prompt = "Phân tích nội dung sau thành một prompt video:\n\n" . $inputContent;
 
         if (!empty($targetPlatform)) {
             $platformInstructions = match (strtolower($targetPlatform)) {
-                'runway' => 'Target Platform: Runway Gen-3. Focus on cinematic movement, camera tracking, dynamic lighting, and photorealistic video detail.',
-                'sora' => 'Target Platform: OpenAI Sora. Focus on rich scene physics, narrative depth, precise motion control, and high spatial consistency.',
-                'kling' => 'Target Platform: Kling AI. Focus on clear subject motions, realistic fluid movements, dramatic camera angles, and vivid textures.',
-                'midjourney' => 'Target Platform: Midjourney v6 / Animation. Focus on artistic styling, color grading, photographic parameters, and vivid atmospheric cues.',
-                default => "Target Platform: " . ucfirst($targetPlatform) . ". Tailor prompt specifically for optimal video generation on this engine.",
+                'runway' => 'Nền tảng đích: Runway Gen-3. Tập trung vào chuyển động điện ảnh, camera tracking, ánh sáng động và chi tiết video chân thực.',
+                'sora' => 'Nền tảng đích: OpenAI Sora. Tập trung vào vật lý cảnh quay phong phú, chiều sâu tường thuật, điều khiển chuyển động chính xác và tính nhất quán không gian cao.',
+                'kling' => 'Nền tảng đích: Kling AI. Tập trung vào chuyển động chủ thể rõ ràng, chuyển động mượt mà chân thực, góc máy ấn tượng và kết cấu sống động.',
+                'midjourney' => 'Nền tảng đích: Midjourney v6 / Animation. Tập trung vào phong cách nghệ thuật, chỉnh màu, thông số nhiếp ảnh và không khí sống động.',
+                default => 'Nền tảng đích: ' . ucfirst($targetPlatform) . '. Tùy chỉnh prompt để tối ưu cho engine tạo video này.',
             };
             $prompt .= "\n\n" . $platformInstructions;
         }
@@ -69,27 +74,29 @@ class PromptAnalyzerService
             'properties' => [
                 'subject' => [
                     'type' => 'string',
-                    'description' => 'Main subject in the video',
+                    'description' => 'Chủ thể chính trong video',
                 ],
                 'action' => [
                     'type' => 'string',
-                    'description' => 'Action performed by the subject',
+                    'description' => 'Hành động của chủ thể',
                 ],
                 'environment' => [
                     'type' => 'string',
-                    'description' => 'Environment and surrounding context',
+                    'description' => 'Bối cảnh và môi trường xung quanh',
                 ],
                 'camera_movement' => [
                     'type' => 'string',
-                    'description' => 'Camera angle and movement',
+                    'description' => 'Góc máy và chuyển động camera',
                 ],
                 'lighting_and_atmosphere' => [
                     'type' => 'string',
-                    'description' => 'Lighting and atmosphere',
+                    'description' => 'Ánh sáng và không khí',
                 ],
                 'final_video_prompt' => [
                     'type' => 'string',
-                    'description' => 'Complete English video prompt ready for a video generation API',
+                    'description' => 'Prompt video hoàn chỉnh bằng '
+                        . $this->languagePolicy->languageName()
+                        . ', sẵn sàng cho API tạo video',
                 ],
             ],
             'required' => [
@@ -107,8 +114,7 @@ class PromptAnalyzerService
     {
         $template = $contentPrompt->template;
 
-        $systemInstruction = $template?->system_instruction
-            ?? $this->getDefaultSystemInstruction();
+        $systemInstruction = $this->buildSystemInstruction($template?->system_instruction);
 
         $systemInstruction .= "\n\n" . $this->getRefinementGuardrail();
 
@@ -127,7 +133,7 @@ class PromptAnalyzerService
         );
 
         if (!is_array($data) || empty($data['final_video_prompt'])) {
-            throw new RuntimeException('Gemini returned invalid or incomplete response during refinement.');
+            throw new RuntimeException('Gemini trả về phản hồi không hợp lệ hoặc thiếu dữ liệu trong quá trình tinh chỉnh.');
         }
 
         return $data;
@@ -135,10 +141,10 @@ class PromptAnalyzerService
 
     private function getRefinementGuardrail(): string
     {
-        return 'You are refining a previously generated JSON result, not creating a new one. '
-            . 'Keep every field exactly as-is unless it is explicitly listed as a field to revise. '
-            . 'For the listed fields, make them clearer, more specific, and more detailed based on the '
-            . "user's instruction — do not change the core subject or meaning unless the instruction asks for it.";
+        return 'Bạn đang tinh chỉnh một kết quả JSON đã tạo trước đó, không phải tạo mới. '
+            . 'Giữ nguyên mọi trường trừ những trường được liệt kê cần chỉnh sửa. '
+            . 'Với các trường được liệt kê, hãy làm chúng rõ ràng, cụ thể và chi tiết hơn dựa trên '
+            . 'yêu cầu của người dùng — không thay đổi chủ thể hoặc ý nghĩa cốt lõi trừ khi yêu cầu chỉnh sửa đòi hỏi.';
     }
 
     private function buildRefinementPrompt(
@@ -149,19 +155,19 @@ class PromptAnalyzerService
         array $fields
     ): string {
         $fieldsToRevise = in_array('all', $fields, true)
-            ? 'all fields'
+            ? 'tất cả các trường'
             : implode(', ', $fields);
 
-        $prompt = "Original source content:\n{$inputContent}\n\n";
-        $prompt .= "Previous structured result (JSON):\n" . json_encode($previousResult, JSON_PRETTY_PRINT) . "\n\n";
-        $prompt .= "Fields to revise: {$fieldsToRevise}\n";
-        $prompt .= "User's refinement instruction: \"{$instruction}\"\n\n";
-        $prompt .= 'Return the complete JSON object again in the same schema. Revise only the requested '
-            . 'fields to be clearer and more detailed, then update final_video_prompt to reflect any changes '
-            . 'made to the other fields.';
+        $prompt = "Nội dung nguồn gốc:\n{$inputContent}\n\n";
+        $prompt .= "Kết quả có cấu trúc trước đó (JSON):\n" . json_encode($previousResult, JSON_PRETTY_PRINT) . "\n\n";
+        $prompt .= "Các trường cần chỉnh sửa: {$fieldsToRevise}\n";
+        $prompt .= "Yêu cầu chỉnh sửa của người dùng: \"{$instruction}\"\n\n";
+        $prompt .= 'Hãy trả lại toàn bộ đối tượng JSON theo đúng schema. Chỉ chỉnh sửa các trường được yêu cầu '
+            . 'cho rõ ràng và chi tiết hơn, sau đó cập nhật final_video_prompt để phản ánh các thay đổi '
+            . 'đã thực hiện ở các trường khác.';
 
         if (!empty($targetPlatform)) {
-            $prompt .= "\n\nTarget platform remains: {$targetPlatform}.";
+            $prompt .= "\n\nNền tảng đích vẫn là: {$targetPlatform}.";
         }
 
         return $prompt;

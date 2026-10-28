@@ -1,5 +1,6 @@
 import { PageProps } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { t } from '@/i18n';
 
 export default function Welcome({
     auth,
@@ -19,7 +20,7 @@ export default function Welcome({
 
     return (
         <>
-            <Head title="Welcome" />
+            <Head title={t('welcome.title')} />
             <div className="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">
                 <img
                     id="background"
@@ -48,7 +49,7 @@ export default function Welcome({
                                         href={route('dashboard')}
                                         className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                                     >
-                                        Dashboard
+                                        {t('nav.dashboard')}
                                     </Link>
                                 ) : (
                                     <>
@@ -56,13 +57,13 @@ export default function Welcome({
                                             href={route('login')}
                                             className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                                         >
-                                            Log in
+                                            {t('auth.login.title')}
                                         </Link>
                                         <Link
                                             href={route('register')}
                                             className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                                         >
-                                            Register
+                                            {t('auth.register.title')}
                                         </Link>
                                     </>
                                 )}
@@ -82,13 +83,13 @@ export default function Welcome({
                                     >
                                         <img
                                             src="https://laravel.com/assets/img/welcome/docs-light.svg"
-                                            alt="Laravel documentation screenshot"
+                                            alt="Ảnh chụp tài liệu Laravel"
                                             className="aspect-video h-full w-full flex-1 rounded-[10px] object-cover object-top drop-shadow-[0px_4px_34px_rgba(0,0,0,0.06)] dark:hidden"
                                             onError={handleImageError}
                                         />
                                         <img
                                             src="https://laravel.com/assets/img/welcome/docs-dark.svg"
-                                            alt="Laravel documentation screenshot"
+                                            alt="Ảnh chụp tài liệu Laravel"
                                             className="hidden aspect-video h-full w-full flex-1 rounded-[10px] object-cover object-top drop-shadow-[0px_4px_34px_rgba(0,0,0,0.25)] dark:block"
                                         />
                                         <div className="absolute -bottom-16 -left-16 h-40 w-[calc(100%+8rem)] bg-gradient-to-b from-transparent via-white to-white dark:via-zinc-900 dark:to-zinc-900"></div>
@@ -119,18 +120,11 @@ export default function Welcome({
 
                                             <div className="pt-3 sm:pt-5 lg:pt-0">
                                                 <h2 className="text-xl font-semibold text-black dark:text-white">
-                                                    Documentation
+                                                    {t('welcome.docs.title')}
                                                 </h2>
 
                                                 <p className="mt-4 text-sm/relaxed">
-                                                    Laravel has wonderful
-                                                    documentation covering every
-                                                    aspect of the framework.
-                                                    Whether you are a newcomer
-                                                    or have prior experience
-                                                    with Laravel, we recommend
-                                                    reading our documentation
-                                                    from beginning to end.
+                                                    {t('welcome.docs.desc')}
                                                 </p>
                                             </div>
                                         </div>
@@ -170,16 +164,11 @@ export default function Welcome({
 
                                     <div className="pt-3 sm:pt-5">
                                         <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Laracasts
+                                            {t('welcome.laracasts.title')}
                                         </h2>
 
                                         <p className="mt-4 text-sm/relaxed">
-                                            Laracasts offers thousands of video
-                                            tutorials on Laravel, PHP, and
-                                            JavaScript development. Check them
-                                            out, see for yourself, and massively
-                                            level up your development skills in
-                                            the process.
+                                            {t('welcome.laracasts.desc')}
                                         </p>
                                     </div>
 
@@ -219,16 +208,11 @@ export default function Welcome({
 
                                     <div className="pt-3 sm:pt-5">
                                         <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Laravel News
+                                            {t('welcome.news.title')}
                                         </h2>
 
                                         <p className="mt-4 text-sm/relaxed">
-                                            Laravel News is a community driven
-                                            portal and newsletter aggregating
-                                            all of the latest and most important
-                                            news in the Laravel ecosystem,
-                                            including new package releases and
-                                            tutorials.
+                                            {t('welcome.news.desc')}
                                         </p>
                                     </div>
 
@@ -263,13 +247,12 @@ export default function Welcome({
 
                                     <div className="pt-3 sm:pt-5">
                                         <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Vibrant Ecosystem
+                                            {t('welcome.ecosystem.title')}
                                         </h2>
 
                                         <p className="mt-4 text-sm/relaxed">
-                                            Laravel's robust library of
-                                            first-party tools and libraries,
-                                            such as{' '}
+                                            {t('welcome.ecosystem.desc1')}
+                                            {' '}
                                             <a
                                                 href="https://forge.laravel.com"
                                                 className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white dark:focus-visible:ring-[#FF2D20]"
@@ -297,16 +280,16 @@ export default function Welcome({
                                             >
                                                 Envoyer
                                             </a>
-                                            , and{' '}
+                                            ,{' '}
+                                            và{' '}
                                             <a
                                                 href="https://herd.laravel.com"
                                                 className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
                                             >
                                                 Herd
                                             </a>{' '}
-                                            help you take your projects to the
-                                            next level. Pair them with powerful
-                                            open source libraries like{' '}
+                                            {t('welcome.ecosystem.desc2')}
+                                            {' '}
                                             <a
                                                 href="https://laravel.com/docs/billing"
                                                 className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
@@ -348,7 +331,7 @@ export default function Welcome({
                                             >
                                                 Telescope
                                             </a>
-                                            , and more.
+                                            , và hơn thế nữa.
                                         </p>
                                     </div>
                                 </div>
@@ -356,7 +339,7 @@ export default function Welcome({
                         </main>
 
                         <footer className="py-16 text-center text-sm text-black dark:text-white/70">
-                            Laravel v{laravelVersion} (PHP v{phpVersion})
+                            {t('welcome.footer', { laravel: laravelVersion, php: phpVersion })}
                         </footer>
                     </div>
                 </div>

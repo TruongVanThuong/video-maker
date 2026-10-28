@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import {
     Film,
     Clapperboard,
@@ -9,10 +10,12 @@ import {
     RotateCcw,
     MonitorPlay,
     RefreshCcw,
+    Rocket,
 } from 'lucide-react';
 import ContextCard from './ContextCard';
 import axios from 'axios';
 import { PromptResult, PromptStatus, REFINABLE_FIELDS, MAX_REFINEMENTS } from '@/types/prompt';
+import { t } from '@/i18n';
 
 
 interface PromptOutputPanelProps {
@@ -24,6 +27,9 @@ interface PromptOutputPanelProps {
     onSendPipeline: () => void;
     onRefineStart: () => void;
     onResultUpdated: (result: PromptResult) => void;
+    processing: boolean;
+    retrying: boolean;
+    retryError: string | null;
 }
 
 type OutputTab = 'structured' | 'json';
@@ -35,11 +41,16 @@ export default function PromptOutputPanel({
     onRetry,
     onSendPipeline,
     onRefineStart,
-    onResultUpdated
+    onResultUpdated,
+    processing,
+    retrying,
+    retryError,
 }: PromptOutputPanelProps) {
     const [copied, setCopied] = useState(false);
     const [pipelineSent, setPipelineSent] = useState(false);
     const [activeTab, setActiveTab] = useState<OutputTab>('structured');
+    const [converting, setConverting] = useState(false);
+    const [conversionError, setConversionError] = useState<string | null>(null);
 
     const copyToClipboard = async (text: string) => {
         if (!text) {
@@ -68,6 +79,42 @@ export default function PromptOutputPanel({
         }, 3000);
     };
 
+    const isConverted =
+        result?.conversion_status === 'converted' &&
+        Boolean(result?.project_id);
+
+    const handleConvert = () => {
+        if (!result || converting) {
+            return;
+        }
+
+        setConversionError(null);
+
+        if (isConverted && result.project_id) {
+            router.visit(route('projects.studio', result.project_id));
+            return;
+        }
+
+        setConverting(true);
+
+        router.post(
+            route('prompts.convert', result.id),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => setConverting(false),
+                onError: (errors) => {
+                    setConversionError(
+                        Object.values(errors)[0] ||
+                            t('analyzer.convert.error')
+                    );
+                    setConverting(false);
+                },
+                onFinish: () => setConverting(false),
+            }
+        );
+    };
+
     const renderStatusBadge = () => {
         if (!status) {
             return null;
@@ -77,7 +124,6 @@ export default function PromptOutputPanel({
         const isProcessing =
             status === 'processing' || status === 'pending';
         const isFailed = status === 'failed';
-
         return (
             <span
                 className={`text-xs font-semibold px-2.5 py-1 rounded-full border flex items-center gap-1.5 uppercase tracking-wider ${
@@ -100,7 +146,7 @@ export default function PromptOutputPanel({
                     }`}
                 />
 
-                {status}
+                {t(`status.${status}`)}
             </span>
         );
     };
@@ -163,10 +209,10 @@ export default function PromptOutputPanel({
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 setRefineError(
-                    error.response?.data?.message || 'Không thể gửi yêu cầu tinh chỉnh.'
+                    error.response?.data?.message || t('analyzer.refine.error')
                 );
             } else {
-                setRefineError('Đã xảy ra lỗi không xác định.');
+                setRefineError(t('analyzer.refine.unknown_error'));
             }
         } finally {
             setRefineSubmitting(false);
@@ -180,7 +226,7 @@ export default function PromptOutputPanel({
                 <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-6">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
                         <Film className="w-5 h-5 text-emerald-400" />
-                        Prompt Studio Output
+                        {t('analyzer.output.title')}
                     </h2>
 
                     {renderStatusBadge()}
@@ -195,13 +241,11 @@ export default function PromptOutputPanel({
 
                         <div>
                             <h3 className="text-base font-bold text-gray-200">
-                                No Prompt Generated Yet
+                                {t('analyzer.idle.title')}
                             </h3>
 
                             <p className="text-xs text-gray-400 mt-1">
-                                Select your style template, choose target
-                                video engine, enter script content, and
-                                click "Analyze & Generate".
+                                {t('analyzer.idle.desc')}
                             </p>
                         </div>
 
@@ -209,24 +253,22 @@ export default function PromptOutputPanel({
                             <div className="p-3 rounded-xl bg-gray-950/50 border border-gray-800/80">
                                 <h4 className="text-xs font-semibold text-violet-300 mb-1 flex items-center gap-1">
                                     <Wand2 className="w-3.5 h-3.5" />
-                                    Structured DTO
+                                    {t('analyzer.idle.dto')}
                                 </h4>
 
                                 <p className="text-[11px] text-gray-400">
-                                    Extracts subject, action, lighting,
-                                    camera angles automatically.
+                                    {t('analyzer.idle.dto_desc')}
                                 </p>
                             </div>
 
                             <div className="p-3 rounded-xl bg-gray-950/50 border border-gray-800/80">
                                 <h4 className="text-xs font-semibold text-indigo-300 mb-1 flex items-center gap-1">
                                     <MonitorPlay className="w-3.5 h-3.5" />
-                                    Engine Tailored
+                                    {t('analyzer.idle.engine')}
                                 </h4>
 
                                 <p className="text-[11px] text-gray-400">
-                                    Optimized for Sora, Runway, Kling &
-                                    Midjourney format.
+                                    {t('analyzer.idle.engine_desc')}
                                 </p>
                             </div>
                         </div>
@@ -255,12 +297,11 @@ export default function PromptOutputPanel({
 
                         <div className="space-y-2">
                             <h3 className="text-base font-bold text-white">
-                                Analyzing Context with Gemini AI...
+                                {t('analyzer.processing.title')}
                             </h3>
 
                             <p className="text-xs text-gray-400">
-                                Extracting camera dynamics, atmospheric
-                                cues & subject movement
+                                {t('analyzer.processing.desc')}
                             </p>
                         </div>
 
@@ -268,21 +309,21 @@ export default function PromptOutputPanel({
                             <div className="flex items-center space-x-2 text-emerald-400">
                                 <Check className="w-3.5 h-3.5" />
                                 <span>
-                                    Receiving input script parameters
+                                    {t('analyzer.processing.step1')}
                                 </span>
                             </div>
 
                             <div className="flex items-center space-x-2 text-amber-400 animate-pulse">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span>
-                                    Running structured JSON decomposition
+                                    {t('analyzer.processing.step2')}
                                 </span>
                             </div>
 
                             <div className="flex items-center space-x-2 text-gray-500">
                                 <span className="w-3.5 h-3.5 rounded-full border border-gray-600 block" />
                                 <span>
-                                    Formatting engine prompt payload
+                                    {t('analyzer.processing.step3')}
                                 </span>
                             </div>
                         </div>
@@ -297,23 +338,39 @@ export default function PromptOutputPanel({
 
                             <div>
                                 <h3 className="font-bold text-sm text-rose-300">
-                                    Prompt Analysis Failed
+                                    {t('analyzer.failed.title')}
                                 </h3>
 
                                 <p className="text-xs text-rose-300/80 mt-1">
                                     {result?.error_message ||
-                                        'An unexpected error occurred while contacting the AI API.'}
+                                        t('analyzer.failed.default')}
                                 </p>
                             </div>
                         </div>
 
+                        {retryError && (
+                            <p className="text-xs text-rose-400 flex items-center gap-1.5">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                {retryError}
+                            </p>
+                        )}
+
                         <button
                             type="button"
                             onClick={onRetry}
-                            className="px-4 py-2 bg-rose-800 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5"
+                            disabled={processing || retrying}
+                            className="px-4 py-2 bg-rose-800 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5"
                         >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            <span>Retry Analysis</span>
+                            <RotateCcw
+                                className={`w-3.5 h-3.5 ${
+                                    retrying ? 'animate-spin' : ''
+                                }`}
+                            />
+                            <span>
+                                {retrying
+                                    ? t('analyzer.retry.sending')
+                                    : t('analyzer.failed.retry')}
+                            </span>
                         </button>
                     </div>
                 )}
@@ -321,14 +378,52 @@ export default function PromptOutputPanel({
                 {/* COMPLETED */}
                 {status === 'completed' && result && (
                     <div className="space-y-6">
+                        {/* CONVERSION CTA BUTTON TO STUDIO */}
+                        <div className="bg-gradient-to-r from-violet-950/80 via-indigo-950/80 to-emerald-950/80 p-4 rounded-xl border border-violet-800/60 shadow-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                                    <Rocket className="w-4 h-4 text-amber-400 animate-pulse" />
+                                    {t('analyzer.convert.title')}
+                                </span>
+                                <span className="text-[10px] bg-violet-900/60 text-violet-300 px-2 py-0.5 rounded font-semibold">
+                                    {t('analyzer.convert.badge')}
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-300">
+                                {t('analyzer.convert.desc')}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={handleConvert}
+                                disabled={converting}
+                                className="w-full py-2.5 px-4 bg-gradient-to-r from-violet-600 via-indigo-600 to-emerald-600 hover:from-violet-500 hover:to-emerald-500 disabled:opacity-60 disabled:cursor-wait text-white font-extrabold text-xs rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center space-x-2 mt-2"
+                            >
+                                <Rocket className="w-4 h-4 text-amber-300" />
+                                <span>
+                                    {converting
+                                        ? t('analyzer.convert.converting')
+                                        : isConverted
+                                        ? t('analyzer.convert.open_studio')
+                                        : t('analyzer.convert.button')}
+                                </span>
+                            </button>
+
+                            {conversionError && (
+                                <p className="text-[11px] text-rose-400 flex items-center gap-1.5 pt-1">
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                    {conversionError}
+                                </p>
+                            )}
+                        </div>
+
                         {/* FINAL PROMPT — thêm khả năng edit trực tiếp */}
                         <div className="bg-gray-950 border border-violet-900/50 rounded-xl p-4 space-y-3">
                             <div className="flex items-center justify-between border-b border-gray-800/80 pb-2">
                                 <span className="text-xs font-extrabold uppercase tracking-wider text-violet-400">
-                                    Final English Video Prompt
+                                    {t('analyzer.final_prompt_title')}
                                     {result.is_manually_edited && (
                                         <span className="ml-2 text-[10px] normal-case font-semibold text-amber-400">
-                                            (đã sửa tay)
+                                            {t('analyzer.manually_edited')}
                                         </span>
                                     )}
                                 </span>
@@ -336,7 +431,7 @@ export default function PromptOutputPanel({
                             </div>
 
                             <ContextCard
-                                title="Final prompt"
+                                title={t('analyzer.final_prompt_title')}
                                 value={result.final_prompt}
                                 icon="🎬"
                                 color="text-emerald-300"
@@ -350,31 +445,31 @@ export default function PromptOutputPanel({
                         {result.analyzed_structure && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <ContextCard
-                                    title="Subject" icon="👤" color="text-amber-300"
+                                    title={t('field.subject')} icon="👤" color="text-amber-300"
                                     value={result.analyzed_structure.subject}
                                     onSave={(val) => saveField('subject', val)}
                                     saving={savingField === 'subject'}
                                 />
                                 <ContextCard
-                                    title="Action" icon="🏃" color="text-blue-300"
+                                    title={t('field.action')} icon="🏃" color="text-blue-300"
                                     value={result.analyzed_structure.action}
                                     onSave={(val) => saveField('action', val)}
                                     saving={savingField === 'action'}
                                 />
                                 <ContextCard
-                                    title="Environment" icon="🏞️" color="text-emerald-300"
+                                    title={t('field.environment')} icon="🏞️" color="text-emerald-300"
                                     value={result.analyzed_structure.environment}
                                     onSave={(val) => saveField('environment', val)}
                                     saving={savingField === 'environment'}
                                 />
                                 <ContextCard
-                                    title="Camera Movement" icon="🎥" color="text-purple-300"
+                                    title={t('field.camera_movement')} icon="🎥" color="text-purple-300"
                                     value={result.analyzed_structure.camera_movement}
                                     onSave={(val) => saveField('camera_movement', val)}
                                     saving={savingField === 'camera_movement'}
                                 />
                                 <ContextCard
-                                    title="Lighting & Atmosphere" icon="💡" color="text-indigo-300"
+                                    title={t('field.lighting_and_atmosphere')} icon="💡" color="text-indigo-300"
                                     value={result.analyzed_structure.lighting_and_atmosphere}
                                     onSave={(val) => saveField('lighting_and_atmosphere', val)}
                                     saving={savingField === 'lighting_and_atmosphere'}
@@ -394,17 +489,17 @@ export default function PromptOutputPanel({
                                 >
                                     <Wand2 className="w-4 h-4 text-violet-400" />
                                     {refineDisabled
-                                        ? `Đã đạt giới hạn tinh chỉnh (${MAX_REFINEMENTS}/${MAX_REFINEMENTS})`
-                                        : `Tinh chỉnh bằng AI (${refinementCount}/${MAX_REFINEMENTS})`}
+                                        ? t('analyzer.refine.limit', { max: MAX_REFINEMENTS })
+                                        : t('analyzer.refine.open', { count: refinementCount, max: MAX_REFINEMENTS })}
                                 </button>
                             ) : (
                                 <div className="bg-gray-950/60 border border-gray-800 rounded-xl p-4 space-y-3">
                                     <div>
                                         <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-                                            Chọn field cần làm rõ hơn
+                                            {t('analyzer.refine.fields_label')}
                                         </label>
                                         <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                            {[{ key: 'all', label: 'Tất cả' }, ...REFINABLE_FIELDS].map((f) => (
+                                            {[{ key: 'all', label: t('analyzer.refine.all') }, ...REFINABLE_FIELDS].map((f) => (
                                                 <button
                                                     type="button"
                                                     key={f.key}
@@ -423,13 +518,13 @@ export default function PromptOutputPanel({
 
                                     <div>
                                         <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-                                            Yêu cầu cụ thể
+                                            {t('analyzer.refine.instruction_label')}
                                         </label>
                                         <textarea
                                             rows={3}
                                             value={refineInstruction}
                                             onChange={(e) => setRefineInstruction(e.target.value)}
-                                            placeholder='VD: "Camera movement hiện quá chung chung, hãy mô tả rõ kiểu chuyển động (dolly-in, orbit, crane shot...) và tốc độ."'
+                                            placeholder={t('analyzer.refine.instruction_placeholder')}
                                             className="w-full mt-1.5 bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-xs text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 resize-y"
                                         />
                                     </div>
@@ -448,7 +543,7 @@ export default function PromptOutputPanel({
                                             disabled={refineSubmitting}
                                             className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold rounded-lg transition"
                                         >
-                                            Hủy
+                                            {t('common.cancel')}
                                         </button>
                                         <button
                                             type="button"
@@ -457,7 +552,7 @@ export default function PromptOutputPanel({
                                             className="px-4 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5"
                                         >
                                             <RefreshCcw className={`w-3.5 h-3.5 ${refineSubmitting ? 'animate-spin' : ''}`} />
-                                            Gửi yêu cầu tinh chỉnh
+                                            {t('analyzer.refine.submit')}
                                         </button>
                                     </div>
                                 </div>
@@ -470,10 +565,10 @@ export default function PromptOutputPanel({
             {/* FOOTER */}
             <div className="pt-4 border-t border-gray-800 flex items-center justify-between text-[11px] text-gray-500">
                 <span>
-                    Status ID: {activeId || 'None'}
+                    {t('analyzer.footer.status_id')} {activeId || t('common.none')}
                 </span>
 
-                <span>Engine Response: HTTP 200 OK</span>
+                <span>{t('analyzer.footer.engine_response')}</span>
             </div>
         </div>
     );

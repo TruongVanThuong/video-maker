@@ -9,6 +9,7 @@ import {
     X,
     Zap,
 } from 'lucide-react';
+import { t } from '@/i18n';
 
 export interface PromptTemplate {
     id: number;
@@ -55,43 +56,43 @@ const PLATFORM_OPTIONS: PlatformOption[] = [
         name: 'Runway Gen-3',
         badge: 'Gen-3',
         color: 'from-purple-500 to-indigo-600',
-        description: 'Cinematic movement & high physics fidelity',
+        description: t('platform.runway.desc'),
     },
     {
         id: 'sora',
         name: 'OpenAI Sora',
         badge: 'Sora',
         color: 'from-emerald-500 to-teal-600',
-        description: 'Complex multi-shot consistency & realism',
+        description: t('platform.sora.desc'),
     },
     {
         id: 'kling',
         name: 'Kling AI',
         badge: 'Kling 1.5',
         color: 'from-amber-500 to-orange-600',
-        description: 'Fluid character action & dynamic angles',
+        description: t('platform.kling.desc'),
     },
     {
         id: 'midjourney',
         name: 'Midjourney v6',
         badge: 'MJ v6',
         color: 'from-blue-500 to-cyan-600',
-        description: 'Aesthetic visual styling & atmospheric cues',
+        description: t('platform.midjourney.desc'),
     },
 ];
 
 const PRESET_EXAMPLES = [
     {
-        title: 'Cyberpunk Rain City',
-        text: 'A cybernetic detective wearing a illuminated neon trench coat walks down a rainy cyberpunk alleyway in Neo-Tokyo, reflection of flickering holographic ads in puddles, cinematic 8k, slow pan camera.',
+        title: t('preset.cyberpunk.title'),
+        text: t('preset.cyberpunk.text'),
     },
     {
-        title: 'Sci-Fi Spaceship Chase',
-        text: 'An agile futuristic starfighter maneuvers through an asteroid belt at breakneck speed, engine plasma trail glowing bright cyan, dramatic dynamic tracking shot with lens flare.',
+        title: t('preset.spaceship.title'),
+        text: t('preset.spaceship.text'),
     },
     {
-        title: 'Fantasy Dragon Flight',
-        text: 'A majestic emerald dragon soaring majestically above mist-covered mountain peaks at golden hour sunset, realistic wing physics, sweeping aerial drone shot, atmospheric volumetric rays.',
+        title: t('preset.dragon.title'),
+        text: t('preset.dragon.text'),
     },
 ];
 
@@ -124,11 +125,11 @@ export default function PromptInputForm({
             <div className="flex items-center justify-between border-b border-gray-800 pb-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Wand2 className="w-5 h-5 text-indigo-400" />
-                    Prompt Generator
+                    {t('analyzer.generator')}
                 </h2>
 
                 <span className="text-xs text-gray-400 bg-gray-800 px-2.5 py-1 rounded-lg border border-gray-700">
-                    Step 1 of 2
+                    {t('analyzer.step')}
                 </span>
             </div>
 
@@ -141,7 +142,7 @@ export default function PromptInputForm({
                             className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5"
                         >
                             <Layers className="w-4 h-4 text-violet-400" />
-                            Style Template
+                            {t('analyzer.style_template')}
                         </label>
 
                         <div className="flex gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pb-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent hover:scrollbar-thumb-gray-500">
@@ -181,7 +182,7 @@ export default function PromptInputForm({
                             className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm text-gray-200 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 disabled:opacity-50 transition appearance-none cursor-pointer pr-10"
                         >
                             <option value="">
-                                ✨ Auto AI Default Style (Balanced)
+                                {t('analyzer.auto_default')}
                             </option>
 
                             {filteredTemplates.map((template) => (
@@ -210,7 +211,7 @@ export default function PromptInputForm({
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
                         <MonitorPlay className="w-4 h-4 text-indigo-400" />
-                        Target Video Platform
+                        {t('analyzer.target_platform')}
                     </label>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -270,7 +271,7 @@ export default function PromptInputForm({
                             className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5"
                         >
                             <FileText className="w-4 h-4 text-blue-400" />
-                            Input Script / Scene Description
+                            {t('analyzer.input_label')}
                         </label>
 
                         <span className="text-xs text-gray-400">
@@ -291,7 +292,7 @@ export default function PromptInputForm({
                             }
                             disabled={isProcessing}
                             maxLength={10000}
-                            placeholder="Describe your scene, story idea, camera movement, or raw text here in English or Vietnamese..."
+                            placeholder={t('analyzer.input_placeholder')}
                             className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3.5 text-sm text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 disabled:opacity-50 transition resize-y font-sans"
                         />
 
@@ -302,7 +303,7 @@ export default function PromptInputForm({
                                     setData('input_content', '')
                                 }
                                 className="absolute right-3 top-3 p-1 rounded-md text-gray-400 hover:text-white bg-gray-800/80 hover:bg-gray-700 transition"
-                                title="Clear content"
+                                title={t('analyzer.clear')}
                             >
                                 <X className="w-3.5 h-3.5" />
                             </button>
@@ -319,7 +320,7 @@ export default function PromptInputForm({
                     {/* PRESETS */}
                     <div className="pt-2">
                         <p className="text-[11px] font-semibold text-gray-400 mb-1.5">
-                            Quick Sample Presets:
+                            {t('analyzer.presets')}
                         </p>
 
                         <div className="flex flex-wrap gap-1.5">
@@ -354,13 +355,13 @@ export default function PromptInputForm({
                     {isProcessing ? (
                         <>
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            <span>Analyzing Script with AI...</span>
+                            <span>{t('analyzer.analyzing')}</span>
                         </>
                     ) : (
                         <>
                             <Wand2 className="w-4 h-4" />
                             <span>
-                                Analyze & Generate Video Prompt
+                                {t('analyzer.submit')}
                             </span>
                         </>
                     )}

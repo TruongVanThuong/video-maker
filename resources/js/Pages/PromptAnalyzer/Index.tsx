@@ -1,6 +1,7 @@
 import {
     FormEvent,
     useEffect,
+    useMemo,
     useState,
 } from 'react';
 import {
@@ -9,6 +10,7 @@ import {
     usePage,
     Link,
 } from '@inertiajs/react';
+import axios from 'axios';
 import {
     Wand2,
     SlidersHorizontal,
@@ -25,7 +27,26 @@ import PromptInputForm, {
 } from './Components/PromptInputForm';
 import PromptOutputPanel from './Components/PromptOutputPanel';
 import PromptHistoryList from './Components/PromptHistoryList';
-import { PromptResult, PromptStatus, RecentPrompt } from '@/types/prompt';
+import {
+    PromptPagination,
+    PromptPaginationMeta,
+    PromptResult,
+    PromptStatus,
+    RecentPrompt,
+} from '@/types/prompt';
+import { t } from '@/i18n';
+
+const EMPTY_PAGINATION: PromptPaginationMeta = {
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+    from: null,
+    to: null,
+    prev_page_url: null,
+    next_page_url: null,
+    links: [],
+};
 
 interface PageProps {
     auth: {
@@ -38,7 +59,7 @@ interface PageProps {
 
     templates: PromptTemplate[];
 
-    recentPrompts: RecentPrompt[];
+    recentPrompts: PromptPagination<RecentPrompt>;
 
     flash?: {
         prompt_id?: number;
@@ -50,7 +71,7 @@ interface PageProps {
 export default function PromptAnalyzerIndex() {
     const {
         templates = [],
-        recentPrompts = [],
+        recentPrompts,
         flash,
     } = usePage<PageProps>().props;
 
@@ -63,14 +84,14 @@ export default function PromptAnalyzerIndex() {
         result,
         activeId,
         selectPromptResult,
-        markAsRefining,
+        markAsProcessing,
     } = usePromptPolling(flash?.prompt_id);
 
     const [liveResult, setLiveResult] = useState<PromptResult | null>(null);
 
     // Synchronize when the polling result changes, keeping liveResult as the primary display source.
     useEffect(() => {
-        if (result) setLiveResult(result);
+        setLiveResult(result);
     }, [result]);
     /*
     | Local State
@@ -82,8 +103,19 @@ export default function PromptAnalyzerIndex() {
     const [selectedCategory, setSelectedCategory] =
         useState<string>('all');
 
-    const [historyList, setHistoryList] =
-        useState<RecentPrompt[]>(recentPrompts);
+    const [retrying, setRetrying] = useState(false);
+
+    const [retryError, setRetryError] = useState<string | null>(null);
+
+    const historyItems = useMemo(
+        () => recentPrompts?.data ?? [],
+        [recentPrompts]
+    );
+
+    const historyPagination = recentPrompts ?? EMPTY_PAGINATION;
+
+        const [historyList, setHistoryList] =
+            useState<RecentPrompt[]>(historyItems);
 
     /*
     | Form
@@ -125,6 +157,17 @@ export default function PromptAnalyzerIndex() {
         historyList.filter(
             (prompt) => prompt.status === 'completed'
         ).length;
+
+    /*
+    | Sync History With Server Data
+    |
+    | Khi chuyển trang, backend trả về dữ liệu lịch sử mới nên state local
+    | phải được đồng bộ lại, tránh hiển thị nhầm nội dung của trang cũ.
+    */
+
+    useEffect(() => {
+        setHistoryList(historyItems);
+    }, [historyItems]);
 
     /*
     | Update History
@@ -179,7 +222,7 @@ export default function PromptAnalyzerIndex() {
                 input_content:
                     data.input_content ||
                     result.input_content ||
-                    'Analyzed Prompt',
+                    t('analyzer.default_prompt_name'),
 
                 status: result.status,
 
@@ -192,7 +235,7 @@ export default function PromptAnalyzerIndex() {
                 target_platform:
                     data.target_platform,
 
-                created_at: 'Just now',
+                created_at: t('analyzer.just_now'),
             };
 
             return [
@@ -220,18 +263,35 @@ export default function PromptAnalyzerIndex() {
 
     /*
     | Retry
+    |
+    | Gọi endpoint retry của backend (POST /prompts/{id}/retry). Backend
+    | chạy lại job phân tích trên chính bản ghi hiện tại và trả về id
+    | đang được xử lý để polling tiếp tục theo dõi đúng bản ghi đó.
     */
 
-    const handleRetry = () => {
-        /*
-         * Reuse the same form data.
-         *
-         * The PromptInputForm only knows that
-         * it should call this function.
-         */
-        post('/prompts', {
-            preserveScroll: true,
-        });
+    const handleRetry = async () => {
+        if (activeId == null || retrying || processing) return;
+
+        setRetrying(true);
+        setRetryError(null);
+
+        try {
+            const response = await axios.post<{
+                id: number;
+                status: string;
+            }>(route('prompts.retry', activeId));
+
+            markAsProcessing(response.data?.id ?? activeId);
+        } catch (error) {
+            setRetryError(
+                axios.isAxiosError(error)
+                    ? error.response?.data?.message ||
+                      t('analyzer.retry.error')
+                    : t('analyzer.retry.unknown_error')
+            );
+        } finally {
+            setRetrying(false);
+        }
     };
 
     /*
@@ -241,6 +301,11 @@ export default function PromptAnalyzerIndex() {
     const handleSelectHistory = (
         item: RecentPrompt
     ) => {
+        setData({
+            input_content: item.input_content ?? '',
+            prompt_template_id: item.prompt_template_id ?? '',
+            target_platform: item.target_platform ?? 'runway',
+        });
         selectPromptResult(item);
     };
 
@@ -291,9 +356,7 @@ export default function PromptAnalyzerIndex() {
                                 </h1>
 
                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                    Deconstruct text scripts into
-                                    ultra-precise camera & scene
-                                    instructions
+                                    {t('analyzer.subtitle')}
                                 </p>
                             </div>
                         </div>
@@ -306,7 +369,7 @@ export default function PromptAnalyzerIndex() {
                                 <Cpu className="w-3.5 h-3.5 text-emerald-500" />
 
                                 <span>
-                                    Engine:{' '}
+                                    {t('analyzer.engine')}{' '}
                                     <strong className="text-gray-900 dark:text-white">
                                         Gemini 2.5 Flash
                                     </strong>
@@ -319,7 +382,7 @@ export default function PromptAnalyzerIndex() {
                                 <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
 
                                 <span>
-                                    Generated:{' '}
+                                    {t('analyzer.generated')}{' '}
                                     <strong className="text-gray-900 dark:text-white">
                                         {completedCount}
                                     </strong>
@@ -336,14 +399,14 @@ export default function PromptAnalyzerIndex() {
                             <SlidersHorizontal className="w-4 h-4" />
 
                             <span>
-                                Manage Templates
+                                {t('analyzer.manage_templates')}
                             </span>
                         </Link>
                     </div>
                 </div>
             }
         >
-            <Head title="AI Video Prompt Studio" />
+            <Head title={t('analyzer.title')} />
 
             <div className="py-8 bg-gray-950 min-h-[calc(100vh-4rem)] text-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -374,14 +437,18 @@ export default function PromptAnalyzerIndex() {
                             activeId={activeId}
                             onRetry={handleRetry}
                             onSendPipeline={handleSendPipeline}
-                            onRefineStart={markAsRefining}
+                            onRefineStart={markAsProcessing}
                             onResultUpdated={setLiveResult}
+                            processing={isProcessing}
+                            retrying={retrying}
+                            retryError={retryError}
                         />
                     </div>
 
                     {/* HISTORY */}
                     <PromptHistoryList
                         history={historyList}
+                        pagination={historyPagination}
                         activeId={activeId}
                         onSelect={
                             handleSelectHistory

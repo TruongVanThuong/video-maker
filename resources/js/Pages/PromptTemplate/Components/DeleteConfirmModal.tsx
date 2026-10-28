@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import { PromptTemplate } from '@/types/promptTemplate';
+import { t } from '@/i18n';
 
 interface Props {
     isOpen: boolean;
@@ -30,9 +31,9 @@ export default function DeleteConfirmModal({ isOpen, onClose, template }: Props)
                 </div>
 
                 <div className="space-y-1.5">
-                    <h3 className="text-lg font-bold text-white">Delete Prompt Template?</h3>
+                    <h3 className="text-lg font-bold text-white">{t('template.delete_confirm_title')}</h3>
                     <p className="text-xs text-gray-400">
-                        Are you sure you want to delete <strong className="text-gray-200">{template.name}</strong>? This action cannot be undone.
+                        {t('template.delete_confirm_desc', { name: template.name })}
                     </p>
                 </div>
 
@@ -42,7 +43,7 @@ export default function DeleteConfirmModal({ isOpen, onClose, template }: Props)
                         onClick={onClose}
                         className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold rounded-xl transition"
                     >
-                        Cancel
+                        {t('common.cancel')}
                     </button>
                     <button
                         type="button"
@@ -51,7 +52,7 @@ export default function DeleteConfirmModal({ isOpen, onClose, template }: Props)
                         className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-rose-600/20 transition flex items-center space-x-1.5"
                     >
                         <Trash2 className="w-4 h-4" />
-                        <span>Delete Template</span>
+                        <span>{t('template.delete_confirm_button')}</span>
                     </button>
                 </div>
 

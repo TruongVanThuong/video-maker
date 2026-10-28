@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import axios from 'axios';
 import { X, FlaskConical, Play, CheckCircle2, AlertCircle, Sparkles, Copy, Check } from 'lucide-react';
 import { PromptTemplate } from '@/types/promptTemplate';
+import { t } from '@/i18n';
 
 interface Props {
     isOpen: boolean;
@@ -11,7 +12,7 @@ interface Props {
 
 export default function TemplateTestDrawer({ isOpen, onClose, template }: Props) {
     const [sampleInput, setSampleInput] = useState(
-        'A futuristic samurai standing in front of a glowing cybernetic temple under heavy rain.'
+        'Một samurai tương lai đứng trước ngôi đền cybernetic rực sáng dưới cơn mưa nặng hạt.'
     );
     const [systemInstruction, setSystemInstruction] = useState(
         template?.system_instruction || ''
@@ -50,13 +51,13 @@ export default function TemplateTestDrawer({ isOpen, onClose, template }: Props)
             if (response.data.success) {
                 setTestResult(response.data.result);
             } else {
-                setError(response.data.error || 'Failed to generate test output.');
+                setError(response.data.error || t('test.error_default'));
             }
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.error || err.message || 'Network error.');
+                setError(err.response?.data?.error || err.message || t('test.error_network'));
             } else {
-                setError('An unknown error occurred.');
+                setError(t('test.error_unknown'));
             }
         } finally {
             setTesting(false);
@@ -88,10 +89,10 @@ export default function TemplateTestDrawer({ isOpen, onClose, template }: Props)
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-white flex items-center gap-2">
-                                Template Live Playground
+                                {t('test.title')}
                             </h3>
                             <p className="text-xs text-gray-400">
-                                Testing: <strong className="text-emerald-300">{template.name}</strong>
+                                {t('test.testing')} <strong className="text-emerald-300">{template.name}</strong>
                             </p>
                         </div>
                     </div>
@@ -110,7 +111,7 @@ export default function TemplateTestDrawer({ isOpen, onClose, template }: Props)
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
                             <Sparkles className="w-4 h-4 text-violet-400" />
-                            System Instruction Rules
+                            {t('test.instruction_label')}
                         </label>
                         <textarea
                             rows={4}
@@ -123,13 +124,13 @@ export default function TemplateTestDrawer({ isOpen, onClose, template }: Props)
                     {/* Sample Input Text */}
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-                            Sample Content Script
+                            {t('test.sample_label')}
                         </label>
                         <textarea
                             rows={3}
                             value={sampleInput}
                             onChange={(e) => setSampleInput(e.target.value)}
-                            placeholder="Enter test script..."
+                            placeholder={t('test.sample_placeholder')}
                             className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-xs text-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                         />
                     </div>
@@ -143,12 +144,12 @@ export default function TemplateTestDrawer({ isOpen, onClose, template }: Props)
                         {testing ? (
                             <>
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>Running AI Test with Gemini...</span>
+                                <span>{t('test.running')}</span>
                             </>
                         ) : (
                             <>
                                 <Play className="w-4 h-4 fill-white" />
-                                <span>Execute Live AI Test</span>
+                                <span>{t('test.run')}</span>
                             </>
                         )}
                     </button>
@@ -166,20 +167,20 @@ export default function TemplateTestDrawer({ isOpen, onClose, template }: Props)
                         <div className="space-y-3 bg-gray-950 p-4 rounded-xl border border-emerald-900/60 shadow-lg">
                             <div className="flex items-center justify-between border-b border-gray-800 pb-2">
                                 <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-4 h-4" /> AI JSON Output Result
+                                    <CheckCircle2 className="w-4 h-4" /> {t('test.result')}
                                 </span>
                                 <button
                                     onClick={handleCopyResult}
                                     className="text-xs px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition flex items-center gap-1"
                                 >
                                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                                    <span>{copied ? 'Copied' : 'Copy'}</span>
+                                    <span>{copied ? t('common.copied') : t('common.copy')}</span>
                                 </button>
                             </div>
 
                             {typeof testResult.final_video_prompt === 'string' && (
                                 <div className="p-3 bg-gray-900 rounded-lg border border-gray-800 text-xs font-mono text-emerald-300 leading-relaxed">
-                                    <strong>Final Video Prompt:</strong>
+                                    <strong>{t('test.final_prompt')}</strong>
                                     <p className="mt-1">{testResult.final_video_prompt}</p>
                                 </div>
                             )}
@@ -198,7 +199,7 @@ export default function TemplateTestDrawer({ isOpen, onClose, template }: Props)
                         onClick={handleClose}
                         className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold rounded-xl transition"
                     >
-                        Close Playground
+                        {t('test.close')}
                     </button>
                 </div>
 

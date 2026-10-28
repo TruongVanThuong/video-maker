@@ -54,6 +54,20 @@ class ContentPromptRepository
         return $this->updateStatus($id, 'processing');
     }
 
+    /**
+     * Đưa prompt đã thất bại về trạng thái đang xử lý để chạy lại.
+     *
+     * Xóa lỗi cũ để nếu lần chạy mới thất bại thì error_message mới
+     * không bị ghi đè bởi thông báo của lần trước.
+     */
+    public function markAsRetrying(int $id): bool
+    {
+        return $this->model->findOrFail($id)->update([
+            'status' => ContentPrompt::STATUS_PROCESSING,
+            'error_message' => null,
+        ]);
+    }
+
     public function markAsCompleted(int $id, array $result): bool
     {
         return $this->model->findOrFail($id)->update([
